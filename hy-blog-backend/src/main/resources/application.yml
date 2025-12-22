@@ -1,0 +1,55 @@
+server:
+  port: 8080 # 后端端口
+
+spring:
+  application:
+    name: hy-blog-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/hy-blog?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: 123456 # 你的数据库密码
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  # --- 新增：文件上传大小限制 ---
+  servlet:
+    multipart:
+      max-file-size: 100MB      # 单个文件最大 100MB
+      max-request-size: 100MB   # 单次请求总大小最大 100MB
+
+redis:
+  host: localhost
+  port: 6379
+  password:  # 如果你设置了密码，请填在这里；没有就留空
+  database: 0
+  timeout: 3000ms
+
+# MyBatis Plus 配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 开启控制台SQL日志
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+
+# Sa-Token 配置
+sa-token:
+  token-name: satoken
+  timeout: 2592000
+  active-timeout: -1
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
+  is-log: false
+
+# 自定义文件上传配置
+file:
+  # 1. 这里我帮你加上了 /my-blog/uploads/，保持项目根目录整洁
+  upload-path: D:/Desktop/个人博客管理系统/hy-blog/my-blog/uploads/
+
+  # 2. 访问前缀
+  access-path: /upload/**
