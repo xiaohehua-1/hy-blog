@@ -24,3 +24,11 @@ export function getFrontRecommendList() {
     method: 'get'
   })
 }
+
+// 获取博文详情
+export function getBlogDetail(id) {
+  return request({
+    url: `/front/blog/detail/${id}`,
+    method: 'get'
+  })
+}

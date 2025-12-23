@@ -50,27 +50,29 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
-/* 核心样式 2：经典标题样式 (长细线 + 短粗线)
+/* 核心样式 2：自适应标题样式 (长细线 + 自适应短粗线) 
+   注意：使用此样式时，HTML结构必须是 <h3 class="section-title"><span>标题文字</span></h3>
 */
 .section-title {
     position: relative;
     font-size: 1.4rem;
     font-weight: 700;
     color: #333;
-    padding-bottom: 12px; /* 文字和线的距离 */
-    margin-bottom: 25px; /* 线和下面内容的距离 */
-    border-bottom: 1px solid #ddd; /* 长细线 */
-    letter-spacing: 1px;
+    margin-bottom: 25px;      /* 标题与下方内容的间距 */
+    border-bottom: 1px solid #ddd; /* 1. 铺满整行的长细线 */
+    line-height: 1.5;
 }
 
+.section-title span {
+    display: inline-block;    /* 让宽度跟随文字内容 */
+    padding-bottom: 10px;     /* 文字与线条的垂直距离 */
+    border-bottom: 3px solid #333; /* 2. 自适应的短粗线 */
+    margin-bottom: -1px;      /* 3. 向下偏移 1px，使其覆盖在长细线上 */
+}
+
+/* 移除旧版可能存在的伪元素，防止冲突 */
 .section-title::after {
-    content: '';
-    position: absolute;
-    bottom: -1px; /* 盖在长细线上 */
-    left: 0;
-    width: 60px; /* 短粗线的长度 */
-    height: 3px; /* 短粗线的厚度 */
-    background-color: #333; /* 短粗线颜色 */
+    display: none;
 }
 
 /* 辅助工具类 */

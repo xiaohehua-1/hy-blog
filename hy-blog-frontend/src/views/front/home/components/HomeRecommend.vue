@@ -1,6 +1,6 @@
 <template>
   <div class="home-recommend-container mb-5" v-if="recommendList.length > 0">
-    <h3 class="section-title">最近推荐</h3>
+    <h3 class="section-title"><span>最近推荐</span></h3>
 
     <el-row :gutter="20">
       

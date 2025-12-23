@@ -1,7 +1,7 @@
 <template>
   <div class="music-wrapper mb-5" v-if="musicList.length > 0">
     
-    <h3 class="section-title">音乐推荐</h3>
+    <h3 class="section-title"><span>音乐推荐</span></h3>
 
     <div class="music-player transparent-card">
       

@@ -1,7 +1,7 @@
 <template>
   <div class="stats-wrapper mb-5">
     
-    <h3 class="section-title">站点统计</h3>
+    <h3 class="section-title"><span>站点统计</span></h3>
 
     <div class="stats-card transparent-card">
       

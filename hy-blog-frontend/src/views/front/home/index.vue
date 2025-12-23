@@ -35,13 +35,16 @@
             
             <HomeRecommend />
 
-            <el-row :gutter="40"> <el-col :md="18" :sm="24">
+            <el-row :gutter="40"> 
+              <el-col :md="18" :sm="24">
                 <div class="blog-list-header">
                   <el-dropdown trigger="hover" @command="handleTypeChange">
-                    <span class="section-title dropdown-title">
-                      {{ currentTypeName === '最新文章' ? '博客列表' : currentTypeName }} 
-                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                    </span>
+                    <div class="section-title dropdown-title">
+                      <span>
+                        {{ currentTypeName === '最新文章' ? '博客列表' : currentTypeName }} 
+                        <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                      </span>
+                    </div>
                     <template #dropdown>
                       <el-dropdown-menu>
                         <el-dropdown-item command="all">全部文章</el-dropdown-item>
@@ -75,6 +78,8 @@
                     :current-page="currentPage"
                     @current-change="handlePageChange"
                     class="custom-pagination"
+                    prev-text="上一页"
+                    next-text="下一页"
                   />
                 </div>
 
@@ -98,6 +103,7 @@
 </template>
 
 <script setup>
+/* 脚本保持不变，为了节省篇幅略去，逻辑与你之前的一致 */
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getFrontBlogList, getFrontTypeList } from '@/api/blog'
 import HomeRecommend from './components/HomeRecommend.vue'
@@ -117,14 +123,13 @@ const scrollToContent = () => {
   window.scrollTo({ top: threshold, behavior: 'smooth' })
 }
 
-// 数据逻辑...
 const blogList = ref([])
 const typeList = ref([]) 
 const currentTypeName = ref("最新文章") 
 const currentTypeId = ref(null) 
 
 const currentPage = ref(1)
-const pageSize = ref(10) // 保持每页10篇
+const pageSize = ref(10)
 const total = ref(0)
 const loading = ref(false)
 
@@ -181,7 +186,82 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 原有的 Navbar, Hero, Layout 样式... */
+/* 1. 修复导航栏间距 */
+.home-right {
+  gap: 25px; /* 这里添加间距 */
+}
+
+/* 2. 侧边栏固定 */
+.sidebar-sticky { 
+  position: -webkit-sticky;
+  position: sticky; 
+  top: 100px; /* 距离顶部 100px 吸附 */
+  z-index: 10;
+}
+
+/* 3. 分页组件文字适配 */
+:deep(.el-pagination.is-background .el-pager li),
+:deep(.el-pagination.is-background .btn-prev),
+:deep(.el-pagination.is-background .btn-next) {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: 1px solid #ccc;
+  background-color: #fff !important;
+  color: #666;
+  font-weight: normal;
+  height: 36px;
+  line-height: 34px;
+  min-width: 36px;
+}
+
+/* 让上一页/下一页按钮宽度自适应 */
+:deep(.el-pagination.is-background .btn-prev),
+:deep(.el-pagination.is-background .btn-next) {
+  padding: 0 15px !important; /* 增加内边距 */
+  width: auto !important;
+}
+
+/* 处理边框重叠 */
+:deep(.el-pagination.is-background .el-pager li + li),
+:deep(.el-pagination.is-background .el-pager li),
+:deep(.el-pagination.is-background .btn-next) {
+  border-left: none; 
+}
+:deep(.el-pagination.is-background .btn-prev) {
+  border-radius: 4px 0 0 4px !important;
+  border-right: 1px solid #ccc;
+}
+:deep(.el-pagination.is-background .el-pager li) {
+  border-left: none !important;
+}
+:deep(.el-pagination.is-background .btn-next) {
+  border-left: none !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+
+/* 激活状态 */
+:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
+  background-color: var(--bs-primary) !important;
+  color: #fff;
+  border-color: var(--bs-primary);
+  position: relative;
+  z-index: 1;
+}
+
+/* 悬停状态 */
+:deep(.el-pagination.is-background .el-pager li:hover),
+:deep(.el-pagination.is-background .btn-prev:hover),
+:deep(.el-pagination.is-background .btn-next:hover) {
+  color: var(--bs-primary);
+  background-color: #f0f9ff !important;
+}
+
+/* 标题样式微调 */
+.dropdown-title { cursor: pointer; display: block; }
+.dropdown-title span { display: flex; align-items: center; gap: 5px; } /* 让图标和文字对齐 */
+.dropdown-title:hover { color: var(--bs-primary); }
+
+/* 其他原有样式 */
 .home-navbar { position: fixed; top: 0; left: 0; width: 100%; height: 85px; z-index: 1001; display: flex; justify-content: center; transition: opacity 0.5s ease; background: transparent; }
 .home-nav-container { width: 1110px; max-width: 100%; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; height: 100%; }
 .home-brand { font-size: 1.8rem; color: #fff; text-decoration: none; font-weight: bold; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
@@ -193,63 +273,7 @@ onUnmounted(() => {
 .hero-subtitle { font-size: 1.5rem; font-weight: 300; margin-top: 10px; font-family: 'ZhuqueFangsong', serif; text-shadow: 0 5px 15px rgba(0, 0, 0, 0.8); }
 .content-body { width: 100%; min-height: 100vh; background-image: url('@/assets/images/bg_01.png'); background-repeat: repeat; background-color: #f5f5f5; }
 .home-main-content { padding-top: 60px; padding-bottom: 60px; }
-.sidebar-sticky { position: sticky; top: 80px; }
-.dropdown-title { cursor: pointer; display: flex; align-items: center; gap: 5px; }
-.dropdown-title:hover { color: var(--bs-primary); }
 .pagination-box { display: flex; justify-content: center; margin-top: 40px; }
-
-/* ========== 分页样式定制 (连在一起) ========== 
-*/
-/* 1. 去除默认的圆角和间距 */
-:deep(.el-pagination.is-background .el-pager li),
-:deep(.el-pagination.is-background .btn-prev),
-:deep(.el-pagination.is-background .btn-next) {
-  margin: 0 !important; /* 去除间距 */
-  border-radius: 0 !important; /* 去除圆角 */
-  border: 1px solid #ccc; /* 统一边框 */
-  background-color: #fff !important; /* 白色背景 */
-  color: #666;
-  font-weight: normal;
-  height: 36px;
-  line-height: 36px;
-  min-width: 36px;
-}
-
-/* 2. 处理边框重叠问题 (除了第一个，其他左边框去掉) */
-:deep(.el-pagination.is-background .el-pager li + li),
-:deep(.el-pagination.is-background .el-pager li),
-:deep(.el-pagination.is-background .btn-next) {
-  border-left: none; 
-}
-/* 修正：btn-prev 是第一个，el-pager li 是接着 btn-prev 的，所以 li 要去左边框 */
-:deep(.el-pagination.is-background .btn-prev) {
-  border-radius: 4px 0 0 4px !important; /* 左侧圆角 */
-  border-right: none; /* 既然连在一起，右边框给下一个元素的左边框代替? 不，还是保留右边框，去掉下一个的左边框比较好控制 */
-  border-right: 1px solid #ccc; /* 恢复右边框 */
-}
-:deep(.el-pagination.is-background .el-pager li) {
-  border-left: none !important;
-}
-:deep(.el-pagination.is-background .btn-next) {
-  border-left: none !important;
-  border-radius: 0 4px 4px 0 !important; /* 右侧圆角 */
-}
-
-/* 3. 激活状态 (蓝色背景，参考图) */
-:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
-  background-color: var(--bs-primary) !important;
-  color: #fff;
-  border-color: var(--bs-primary);
-  position: relative;
-  z-index: 1; /* 保证激活的框浮在上面，边框不被遮挡 */
-}
-
-/* 4. 悬停状态 */
-:deep(.el-pagination.is-background .el-pager li:hover) {
-  color: var(--bs-primary);
-  background-color: #f0f9ff !important;
-}
-
 @media (max-width: 768px) {
   .hero-title { font-size: 2.5rem; }
   .hidden-sm-and-down { display: none; }

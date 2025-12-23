@@ -12,6 +12,7 @@ import com.heyi.blog.service.TagService;
 import com.heyi.blog.utils.R;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,8 @@ public class FrontBlogController {
     private SysConfigService sysConfigService;
     @Autowired
     private TagService tagService;
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /**
      * 获取首页博客列表 (支持分页、分类筛选)
@@ -34,47 +37,38 @@ public class FrontBlogController {
     @GetMapping("/list")
     public R list(@RequestParam(defaultValue = "1") Integer current,
                   @RequestParam(defaultValue = "10") Integer size,
-                  @RequestParam(required = false) Long typeId) { // 新增 typeId 参数
+                  @RequestParam(required = false) Integer typeId) {
 
-        // 1. 获取站长名称
-        SysConfig config = sysConfigService.getById(1);
-        String authorName = (config != null && config.getAuthor() != null) ? config.getAuthor() : "HeYi";
-
-        // 2. 构建查询条件
+        // 1. 分页构造
         Page<Blog> page = new Page<>(current, size);
-        LambdaQueryWrapper<Blog> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Blog::getPublished, true); // 只查已发布
 
-        // 如果传了分类ID，就加筛选条件
+        // 2. 查询条件
+        LambdaQueryWrapper<Blog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Blog::getPublished, true); // 只查已发布的
+
         if (typeId != null) {
-            wrapper.eq(Blog::getTypeId, typeId);
+            wrapper.eq(Blog::getTypeId, typeId); // 根据分类筛选
         }
 
-        wrapper.orderByDesc(Blog::getRecommend) // 推荐的排前面
-                .orderByDesc(Blog::getCreateTime); // 按时间倒序
+        // === 修正点1：移除了 getTop() 排序，只保留时间倒序 ===
+        wrapper.orderByDesc(Blog::getCreateTime);
 
+        // 3. 执行查询
         Page<Blog> blogPage = blogService.page(page, wrapper);
-        List<Blog> records = blogPage.getRecords();
 
-        // 3. 数据转换
-        List<FrontBlogVO> voList = records.stream().map(blog -> {
+        // 4. 转换为 VO (携带标签信息)
+        List<FrontBlogVO> voList = blogPage.getRecords().stream().map(blog -> {
             FrontBlogVO vo = new FrontBlogVO();
             BeanUtils.copyProperties(blog, vo);
 
-            // 确保 createTime 被正确复制 (BeanUtils 会自动处理同名同类型字段)
-            // 如果 vo.createTime 是 null，请检查数据库该字段是否有值
-
-            vo.setAuthor(authorName);
-            vo.setIsOriginal(blog.getCopyright() != null && blog.getCopyright() == 1);
-
-            // 查询标签
+            // === 修正点2：使用你已有的方法 getTagsByBlogId ===
             List<Tag> tags = tagService.getTagsByBlogId(blog.getId());
             vo.setTagList(tags);
 
             return vo;
         }).collect(Collectors.toList());
 
-        // 4. 返回结果
+        // 5. 返回结果
         return R.ok()
                 .data("records", voList)
                 .data("total", blogPage.getTotal())
@@ -100,18 +94,55 @@ public class FrontBlogController {
 
         List<Blog> list = blogService.list(wrapper);
 
-        // 如果推荐的文章不足7篇，可以考虑补足最新的文章 (可选逻辑，这里先严格按推荐查)
-
         // 3. 转换为 VO
         List<FrontBlogVO> voList = list.stream().map(blog -> {
             FrontBlogVO vo = new FrontBlogVO();
             BeanUtils.copyProperties(blog, vo);
-            vo.setAuthor(authorName);
-            // 推荐区不需要查标签，为了性能可以跳过标签查询
-            // vo.setTagList(...)
+            vo.setAuthor(authorName); // 设置统一作者名
             return vo;
         }).collect(Collectors.toList());
 
         return R.ok().data("list", voList);
+    }
+
+    /**
+     * 获取博文详情 (Redis 浏览量统计 +1)
+     */
+    @GetMapping("/detail/{id}")
+    public R getDetail(@PathVariable Long id) {
+        // 1. 查询数据库
+        Blog blog = blogService.getById(id);
+
+        // 2. 校验文章是否存在或已发布
+        if (blog == null || !blog.getPublished()) {
+            return R.error("文章不存在或未发布");
+        }
+
+        // 3. Redis 浏览量处理
+        String viewKey = "blog:view:article:" + id;
+
+        // 3.1 如果 Redis 里没有这个 key，先把数据库的浏览量 set 进去
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(viewKey))) {
+            redisTemplate.opsForValue().set(viewKey, String.valueOf(blog.getViews()));
+        }
+
+        // 3.2 Redis 原子 +1
+        Long newViews = redisTemplate.opsForValue().increment(viewKey);
+
+        // === 修正点3：解决 Long 无法转 Integer 的报错 ===
+        if (newViews != null) {
+            blog.setViews(newViews.intValue());
+        }
+
+        // 3.4 同步更新回数据库
+        blogService.updateById(blog);
+
+        // 4. 获取文章标签 (同样使用 getTagsByBlogId)
+        List<Tag> tags = tagService.getTagsByBlogId(id);
+
+        // 5. 返回完整数据
+        return R.success()
+                .data("data", blog) // 返回详情
+                .data("tags", tags); // 顺便把标签也返回去
     }
 }
