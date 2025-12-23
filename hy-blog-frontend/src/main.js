@@ -19,6 +19,11 @@ import hljs from 'highlight.js';
 // 3. 路由
 import router from './router'
 
+// 引入字体样式
+import '@/assets/styles/fonts.css'
+// 引入全局样式
+import '@/assets/styles/theme.css' 
+
 // 配置编辑器主题
 VMdEditor.use(githubTheme, {
   Hljs: hljs,

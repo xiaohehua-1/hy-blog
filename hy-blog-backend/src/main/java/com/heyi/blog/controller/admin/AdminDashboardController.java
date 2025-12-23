@@ -6,7 +6,7 @@ import com.heyi.blog.entity.Comment;
 import com.heyi.blog.entity.Message;
 import com.heyi.blog.entity.SysLog;
 import com.heyi.blog.entity.vo.DashboardVO;
-import com.heyi.blog.service.TagService;
+import com.heyi.blog.service.*;
 import com.heyi.blog.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,24 +22,24 @@ import java.util.List;
 @RequestMapping("/admin/dashboard")
 public class AdminDashboardController {
 
-    //@Autowired private BlogService blogService;
+    @Autowired private BlogService blogService;
     @Autowired private TagService tagService;
-    //@Autowired private TypeService typeService;
-    //@Autowired private CommentService commentService;
-    //@Autowired private MessageService messageService;
-    //@Autowired private SysLogService sysLogService;
+    @Autowired private TypeService typeService;
+    @Autowired private CommentService commentService;
+    @Autowired private MessageService messageService;
+    @Autowired private SysLogService sysLogService;
 
     @GetMapping("/stats")
     public R stats(@RequestParam(defaultValue = "week") String type) {
         DashboardVO vo = new DashboardVO();
 
         // 1. 顶部六大卡片数据 (不变)
-        //vo.setBlogCount(blogService.count());
+        vo.setBlogCount(blogService.count());
         vo.setTagCount(tagService.count());
-        //vo.setTypeCount(typeService.count());
-        //vo.setCommentCount(commentService.count());
-        //vo.setMessageCount(messageService.count());
-        //vo.setViewCount(sysLogService.count());
+        vo.setTypeCount(typeService.count());
+        vo.setCommentCount(commentService.count());
+        vo.setMessageCount(messageService.count());
+        vo.setViewCount(sysLogService.count());
 
         // 2. 准备图表数据容器
         List<String> dateList = new ArrayList<>();
@@ -109,9 +109,9 @@ public class AdminDashboardController {
 
             // 执行数据库查询
             // 这种循环查库在数据量巨大时性能不佳，但对于毕设或中小型博客，逻辑最清晰且绝对够用
-            //commentTrend.add(commentService.count(new QueryWrapper<Comment>().between("create_time", queryStart, queryEnd)));
-            //messageTrend.add(messageService.count(new QueryWrapper<Message>().between("create_time", queryStart, queryEnd)));
-            //viewTrend.add(sysLogService.count(new QueryWrapper<SysLog>().between("create_time", queryStart, queryEnd)));
+            commentTrend.add(commentService.count(new QueryWrapper<Comment>().between("create_time", queryStart, queryEnd)));
+            messageTrend.add(messageService.count(new QueryWrapper<Message>().between("create_time", queryStart, queryEnd)));
+            viewTrend.add(sysLogService.count(new QueryWrapper<SysLog>().between("create_time", queryStart, queryEnd)));
         }
 
         vo.setDateList(dateList);

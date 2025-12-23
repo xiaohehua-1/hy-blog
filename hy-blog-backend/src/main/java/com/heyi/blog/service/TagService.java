@@ -13,6 +13,8 @@ public interface TagService extends IService<Tag> {
     // 分页查询标签
     IPage<Tag> pageTags(Page<Tag> page);
 
+    List<Tag> getTagsByBlogId(Long blogId);
+
     // 获取所有标签（用于写文章时下拉选择）
     List<Tag> listAll();
 

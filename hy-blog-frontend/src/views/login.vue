@@ -77,7 +77,7 @@ const handleLogin = () => {
       
       // 4. 提示并跳转
       ElMessage.success('登录成功，欢迎回来！')
-      router.push('/') // 登录成功后跳转到首页
+      router.push('/admin/dashboard') // 登录成功后跳转到首页
       
     } catch (error) {
       console.error(error)

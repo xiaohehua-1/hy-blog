@@ -21,4 +21,6 @@ public class Music extends BaseEntity {
     private String fileName;                    // 文件名
     private String filePath;                    // 音乐文件路径
     private String coverPath;                   // 封面路径
+
+    private Boolean enabled;                    // 是否启用
 }

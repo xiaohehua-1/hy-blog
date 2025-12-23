@@ -4,14 +4,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.heyi.blog.entity.BlogTag;
 import com.heyi.blog.entity.Tag;
+import com.heyi.blog.mapper.BlogTagMapper;
 import com.heyi.blog.mapper.TagMapper;
 import com.heyi.blog.service.TagService;
 import com.heyi.blog.utils.R;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 标签业务实现类 (纯净后台版)
@@ -59,5 +64,28 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     public R deleteTag(Long id) {
         // 后续如果需要“有文章引用则禁止删除”的逻辑，可以在这里加
         return this.removeById(id) ? R.success() : R.error("删除失败");
+    }
+    // 在 TagServiceImpl 中注入 BlogTagMapper
+    @Autowired
+    private BlogTagMapper blogTagMapper;
+
+    @Override
+    public List<Tag> getTagsByBlogId(Long blogId) {
+        // 1. 先查中间表，找出关联的 tag_id
+        LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogTag::getBlogId, blogId);
+        List<BlogTag> blogTags = blogTagMapper.selectList(wrapper);
+
+        if (blogTags.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 2. 提取 tag_id 列表
+        List<Long> tagIds = blogTags.stream()
+                .map(BlogTag::getTagId)
+                .collect(Collectors.toList());
+
+        // 3. 查 tag 表
+        return baseMapper.selectBatchIds(tagIds);
     }
 }

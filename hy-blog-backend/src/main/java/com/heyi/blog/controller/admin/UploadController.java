@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequestMapping("/admin/upload")
 public class UploadController {
 
-    // 读取配置文件中的路径
+    // 读取 yml 中的配置路径
     @Value("${file.upload-path}")
     private String uploadPath;
 
@@ -29,28 +29,60 @@ public class UploadController {
         }
 
         try {
-            // 1. 准备文件夹 (按日期分类，避免一个文件夹下文件太多)
-            String dateDir = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
-            String realPath = uploadPath + dateDir;
+            // === 调试日志开始 ===
+            System.out.println("====== 开始处理文件上传 ======");
+            System.out.println("1. 读取到的配置路径 (uploadPath): " + uploadPath);
 
-            File dir = new File(realPath);
+            // 1. 生成日期目录 (例如 2025/12/23)
+            String dateDir = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
+            System.out.println("2. 生成的日期子目录: " + dateDir);
+
+            // 2. 智能拼接真实存储路径 (自动处理斜杠问题)
+            String finalPath;
+            if (uploadPath == null) {
+                // 防御性编程：如果没读到配置，默认存到项目根目录下的 temp 文件夹
+                finalPath = System.getProperty("user.dir") + File.separator + "temp" + File.separator + dateDir;
+                System.err.println("!!! 警告：uploadPath 为 null，使用临时路径: " + finalPath);
+            } else {
+                // 去除末尾可能重复的斜杠，统一拼接
+                String cleanPath = uploadPath.endsWith("/") || uploadPath.endsWith("\\")
+                        ? uploadPath.substring(0, uploadPath.length() - 1)
+                        : uploadPath;
+                finalPath = cleanPath + File.separator + dateDir;
+            }
+            System.out.println("3. 最终计算的物理存储路径: " + finalPath);
+
+            // 3. 创建目录
+            File dir = new File(finalPath);
             if (!dir.exists()) {
-                dir.mkdirs(); // 自动创建 D:/blog-data/upload/2023/12/09
+                boolean created = dir.mkdirs();
+                System.out.println("4. 文件夹不存在，尝试创建... 结果: " + (created ? "成功" : "失败"));
+            } else {
+                System.out.println("4. 文件夹已存在");
             }
 
-            // 2. 生成新文件名
+            // 4. 生成新文件名
             String originalFilename = file.getOriginalFilename();
-            String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String suffix = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
             String newFileName = UUID.randomUUID().toString() + suffix;
 
-            // 3. 保存文件到磁盘
-            file.transferTo(new File(dir, newFileName));
+            // 5. 保存文件
+            File dest = new File(dir, newFileName);
+            file.transferTo(dest);
+            System.out.println("5. 文件保存成功! 绝对路径: " + dest.getAbsolutePath());
+            System.out.println("====== 文件上传结束 ======");
 
-            // 4. 返回访问 URL
-            // 格式：/upload/2023/12/09/xxx.mp3
+            // 6. 返回前端访问 URL
+            // 格式: /upload/2025/12/23/uuid.jpg
+            // 这个前缀 /upload/ 对应前端 vite.config.js 的代理配置
             String url = "/upload/" + dateDir + "/" + newFileName;
 
-            return R.success().data("url", url).data("fileName", originalFilename);
+            return R.success()
+                    .data("url", url)
+                    .data("fileName", originalFilename);
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -57,15 +57,32 @@
         <el-table-column prop="title" label="歌名" min-width="150" show-overflow-tooltip />
         <el-table-column prop="artist" label="歌手" min-width="150" show-overflow-tooltip />
 
-        <el-table-column label="试听" width="300">
+        <el-table-column label="试听" width="320">
           <template #default="scope">
-            <audio :src="scope.row.filePath" controls class="audio-player"></audio>
+            <audio 
+              :src="scope.row.filePath" 
+              controls 
+              preload="metadata"
+              class="audio-player"
+            ></audio>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="启用" align="center" width="100">
+          <template #default="scope">
+            <el-switch
+              v-model="scope.row.enabled"
+              :active-value="true"
+              :inactive-value="false"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              @change="handleStatusChange(scope.row)"
+            />
           </template>
         </el-table-column>
 
         <el-table-column prop="createTime" label="创建时间" width="170" sortable />
-        <el-table-column prop="updateTime" label="更新时间" width="170" sortable />
-
+        
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button type="primary" link :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
@@ -88,14 +105,24 @@
       </div>
     </el-card>
 
-    <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" @close="resetForm" center draggable>
+    <el-dialog :title="dialog.title" v-model="dialog.visible" width="550px" @close="resetForm" center draggable>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" status-icon>
-        <el-form-item label="ID" prop="id">
-          <el-input v-model="form.id" disabled placeholder="自动生成" />
-        </el-form-item>
         
         <el-form-item label="封面" prop="coverPath">
-          <el-input v-model="form.coverPath" placeholder="请输入封面URL" />
+          <el-upload
+            class="cover-uploader"
+            action="/api/admin/upload/file"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :on-error="handleUploadError"
+          >
+            <img v-if="form.coverPath" :src="form.coverPath" class="cover-preview" />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+            <template #tip>
+              <div class="el-upload__tip">只能上传jpg/png文件</div>
+            </template>
+          </el-upload>
         </el-form-item>
 
         <el-form-item label="歌名" prop="title">
@@ -106,12 +133,19 @@
           <el-input v-model="form.artist" placeholder="请输入歌手名" />
         </el-form-item>
 
+        <el-form-item label="状态" prop="enabled">
+          <el-radio-group v-model="form.enabled">
+            <el-radio :label="true">启用</el-radio>
+            <el-radio :label="false">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
         <el-form-item label="文件" prop="filePath">
           <el-upload
             class="upload-demo"
             action="/api/admin/upload/file" 
             :headers="uploadHeaders"
-            :on-success="handleUploadSuccess"
+            :on-success="handleMusicSuccess" 
             :on-error="handleUploadError"
             :limit="1"
             :show-file-list="false"
@@ -135,7 +169,6 @@ import { Plus, Edit, Delete, Search, Refresh, Picture, Upload } from '@element-p
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 
-// 数据定义
 const loading = ref(true)
 const list = ref([])
 const total = ref(0)
@@ -149,10 +182,10 @@ const form = reactive({
   artist: '',
   fileName: '',
   filePath: '',
-  coverPath: ''
+  coverPath: '',
+  enabled: true
 })
 
-// 上传请求头 (带 Token)
 const uploadHeaders = computed(() => ({
   satoken: localStorage.getItem('token')
 }))
@@ -160,10 +193,10 @@ const uploadHeaders = computed(() => ({
 const rules = {
   title: [{ required: true, message: '请输入歌名', trigger: 'blur' }],
   artist: [{ required: true, message: '请输入歌手', trigger: 'blur' }],
-  filePath: [{ required: true, message: '请上传音乐文件', trigger: 'change' }]
+  filePath: [{ required: true, message: '请上传音乐文件', trigger: 'change' }],
+  coverPath: [{ required: true, message: '请上传封面图片', trigger: 'change' }]
 }
 
-// 获取列表
 const getList = async () => {
   loading.value = true
   try {
@@ -175,13 +208,30 @@ const getList = async () => {
   }
 }
 
-// 搜索/重置
 const handleSearch = () => { queryParams.pageNum = 1; getList() }
 const resetQuery = () => { queryParams.title = ''; queryParams.artist = ''; handleSearch() }
 
-// 表单重置
+const handleStatusChange = async (row) => {
+  try {
+    const data = { id: row.id, enabled: row.enabled }
+    const res = await request.put('/admin/music/update', data)
+    if (res.code === 20000 || res.success) {
+      ElMessage.success('状态更新成功')
+    } else {
+      row.enabled = !row.enabled
+      ElMessage.error(res.message || '更新失败')
+    }
+  } catch (error) {
+    row.enabled = !row.enabled
+    ElMessage.error('系统异常')
+  }
+}
+
 const resetForm = () => {
-  Object.keys(form).forEach(k => form[k] = '')
+  Object.keys(form).forEach(k => {
+    if (k === 'enabled') form[k] = true
+    else form[k] = ''
+  })
   form.id = null
   nextTick(() => formRef.value?.clearValidate())
 }
@@ -192,21 +242,35 @@ const handleEdit = (row) => {
   dialog.type = 'edit'
   dialog.title = '编辑音乐'
   dialog.visible = true
-  nextTick(() => Object.assign(form, row))
+  nextTick(() => {
+    Object.assign(form, row)
+    if (form.enabled === undefined) form.enabled = true
+  })
 }
 
-// 上传回调
-const handleUploadSuccess = (res) => {
+// === 音乐文件上传成功 ===
+const handleMusicSuccess = (res) => {
   if (res.code === 20000) {
     form.filePath = res.data.url
     form.fileName = res.data.fileName
-    ElMessage.success('上传成功')
-    // 自动清除校验错误
+    ElMessage.success('音乐上传成功')
     formRef.value.clearValidate('filePath')
   } else {
     ElMessage.error(res.message || '上传失败')
   }
 }
+
+// === 封面图片上传成功 ===
+const handleCoverSuccess = (res) => {
+  if (res.code === 20000) {
+    form.coverPath = res.data.url
+    ElMessage.success('封面上传成功')
+    formRef.value.clearValidate('coverPath')
+  } else {
+    ElMessage.error(res.message || '上传失败')
+  }
+}
+
 const handleUploadError = () => {
   ElMessage.error('上传出错，请检查网络或文件大小')
 }
@@ -247,7 +311,25 @@ onMounted(() => { getList() })
 .search-form .el-form-item { margin-bottom: 10px; margin-right: 15px; }
 .cover-img { width: 50px; height: 50px; border-radius: 4px; border: 1px solid #ebeef5; }
 .image-slot { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background: #f5f7fa; color: #909399; }
-.audio-player { height: 40px; width: 100%; }
+.audio-player { height: 40px; width: 100%; display: block; } /* 确保宽度撑开 */
 .pagination-container { margin-top: 20px; }
 .upload-tip { margin-top: 5px; font-size: 12px; color: #67C23A; }
+
+/* 封面上传组件样式 */
+.cover-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: border-color 0.3s;
+}
+.cover-uploader:hover { border-color: #409EFF; }
+.cover-uploader-icon { font-size: 28px; color: #8c939d; }
+.cover-preview { width: 100px; height: 100px; display: block; object-fit: cover; }
 </style>

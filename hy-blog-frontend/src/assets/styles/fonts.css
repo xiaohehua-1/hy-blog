@@ -1,0 +1,13 @@
+/* src/assets/styles/fonts.css */
+@font-face {
+  font-family: 'ZhuqueFangsong';  /* 我们给字体起个英文名，方便引用 */
+  src: url('@/assets/fonts/朱雀仿宋.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* 优化加载体验 */
+}
+
+/* 如果你想让整个网站默认都用这个字体 */
+body {
+  font-family: 'ZhuqueFangsong', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+}

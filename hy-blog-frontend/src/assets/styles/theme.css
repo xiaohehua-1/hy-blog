@@ -1,0 +1,84 @@
+/* ...保留你之前的颜色变量... */
+:root {
+    /* 保留原有的变量 */
+    --bs-blue: #0d6efd;
+    --bs-indigo: #6610f2;
+    --bs-purple: #6f42c1;
+    --bs-pink: #d63384;
+    --bs-red: #dc3545;
+    --bs-orange: #fd7e14;
+    --bs-yellow: #ffc107;
+    --bs-green: #198754;
+    --bs-teal: #20c997;
+    --bs-cyan: #0dcaf0;
+    --bs-black: #000;
+    --bs-white: #fff;
+    --bs-gray: #6c757d;
+    --bs-gray-dark: #343a40;
+    --bs-gray-100: #f8f9fa;
+    --bs-gray-200: #e9ecef;
+    --bs-gray-300: #dee2e6;
+    --bs-gray-400: #ced4da;
+    --bs-gray-500: #adb5bd;
+    --bs-gray-600: #6c757d;
+    --bs-gray-700: #495057;
+    --bs-gray-800: #343a40;
+    --bs-gray-900: #212529;
+    --bs-primary: #0d6efd;
+    --bs-secondary: #6c757d;
+    --bs-body-color: #212529;
+}
+
+/* 核心样式 1：磨砂玻璃卡片 
+   background: rgba(255, 255, 255, 0.6) -> 60%透明度的白色
+   backdrop-filter: blur(10px) -> 背景模糊，产生磨砂感
+*/
+.glass-card {
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+    background: rgba(255, 255, 255, 0.75) !important; /* 悬停时稍微不透明一点，增加交互感 */
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* 核心样式 2：经典标题样式 (长细线 + 短粗线)
+*/
+.section-title {
+    position: relative;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #333;
+    padding-bottom: 12px; /* 文字和线的距离 */
+    margin-bottom: 25px; /* 线和下面内容的距离 */
+    border-bottom: 1px solid #ddd; /* 长细线 */
+    letter-spacing: 1px;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; /* 盖在长细线上 */
+    left: 0;
+    width: 60px; /* 短粗线的长度 */
+    height: 3px; /* 短粗线的厚度 */
+    background-color: #333; /* 短粗线颜色 */
+}
+
+/* 辅助工具类 */
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mt-5 { margin-top: 3rem !important; }
+.d-flex { display: flex !important; }
+.justify-content-between { justify-content: space-between !important; }
+.align-items-center { align-items: center !important; }
+.text-muted { color: #666 !important; }
+.me-3 { margin-right: 1rem !important; }
+.ms-2 { margin-left: 0.5rem !important; }
