@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # === 1. MySQL 数据库 ===
+  mysql:
+    image: mysql:8.0
+    container_name: hy-blog-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 # 必须修改！
+      MYSQL_DATABASE: hy-blog
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    volumes:
+      - ./data/mysql:/var/lib/mysql # 数据挂载出来，防止容器删除后数据丢失
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql # (可选) 第一次启动自动导入SQL
+    ports:
+      - "3306:3306"
+
+  # === 2. Redis 缓存 ===
+  redis:
+    image: redis:latest
+    container_name: hy-blog-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # === 3. 后端服务 ===
+  backend:
+    build: ./hy-blog-backend # 自动去这个目录找 Dockerfile 构建
+    container_name: hy-blog-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      # 告诉后端数据库在哪里 (使用服务名 mysql 和 redis)
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hy-blog?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_PASSWORD: 123456 # 必须和上面 MySQL 一致
+      SPRING_DATA_REDIS_HOST: redis
+    volumes:
+      - D:/Desktop/个人博客管理项目/my-blog/uploads:/app/uploads # 【核心】把容器内的上传目录映射到宿主机
+
+  # === 4. 前端服务 (Nginx) ===
+  nginx:
+    image: nginx:latest
+    container_name: hy-blog-nginx
+    restart: always
+    ports:
+      - "80:80" # 浏览器访问的端口
+    volumes:
+      - ./hy-blog-frontend/dist:/usr/share/nginx/html # 挂载 Vue 打包文件
+      - ./nginx.conf:/etc/nginx/nginx.conf # 挂载配置文件
+      - D:/Desktop/个人博客管理项目/my-blog/uploads:/app/uploads # Nginx 也要能访问到上传的图片
+    depends_on:
+      - backend
