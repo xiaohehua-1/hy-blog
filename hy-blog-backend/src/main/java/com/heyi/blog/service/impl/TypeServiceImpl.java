@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 分类业务实现类 (纯后台版)
+ * 分类业务实现类
+ *
+ * 提供分类的增删改查，包含名称唯一性校验。
  */
 @Service
 public class TypeServiceImpl extends ServiceImpl<TypeMapper, Type> implements TypeService {
@@ -29,15 +31,17 @@ public class TypeServiceImpl extends ServiceImpl<TypeMapper, Type> implements Ty
         return this.list();
     }
 
+    /**
+     * 新增分类，校验ID和名称唯一性
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R saveType(Type type) {
-        // 1. 检查 ID 是否重复 (防止报错刷屏)
+        // 手动指定ID时检查是否冲突，避免主键重复异常
         if (type.getId() != null && this.getById(type.getId()) != null) {
             return R.error("该ID已存在，请重新输入");
         }
 
-        // 2. 检查名称是否重复
         Type exist = this.getOne(new LambdaQueryWrapper<Type>().eq(Type::getName, type.getName()));
         if (exist != null) {
             return R.error("该分类名称已存在");
@@ -45,10 +49,13 @@ public class TypeServiceImpl extends ServiceImpl<TypeMapper, Type> implements Ty
         return this.save(type) ? R.success() : R.error("添加失败");
     }
 
+    /**
+     * 更新分类，名称唯一性校验时排除自身
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R updateType(Type type) {
-        // 1. 检查名称是否重复 (排除自己)
+        // 排除自身ID后再判断名称是否与其他分类冲突
         Type exist = this.getOne(new LambdaQueryWrapper<Type>().eq(Type::getName, type.getName()));
         if (exist != null && !exist.getId().equals(type.getId())) {
             return R.error("该分类名称已存在");
@@ -56,10 +63,12 @@ public class TypeServiceImpl extends ServiceImpl<TypeMapper, Type> implements Ty
         return this.updateById(type) ? R.success() : R.error("更新失败");
     }
 
+    /**
+     * 删除分类（预留：可在此处增加"有文章则禁止删除"的判断）
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R deleteType(Long id) {
-        // 未来可以在这里加逻辑：如果该分类下有文章，禁止删除
         return this.removeById(id) ? R.success() : R.error("删除失败");
     }
 }

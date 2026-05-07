@@ -11,7 +11,9 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * 留言板实体类
+ * 留言板实体，对应 t_message 表
+ * 支持树形层级回复：rootMessageId（根留言）+ parentMessageId（直接父留言）
+ * children / replyNickname 为内存辅助字段，不持久化到数据库
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -29,7 +31,11 @@ public class Message extends BaseEntity {
     private Long parentMessageId;               // 父留言ID
     private Boolean adminMessage;               // 是否为管理员留言
 
+    /**
+     * 获取头像：管理员留言统一返回站长头像，普通用户返回自身头像
+     */
     public String getAvatar() {
+        // 使用 Boolean.TRUE.equals 避免 adminMessage 为 null 时 NPE
         if (Boolean.TRUE.equals(adminMessage)) {
             return "/src/assets/images/me.jpg";
         }

@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 前台留言板控制器
+ * 提供留言树形列表查询（含子回复装配）和留言提交
+ */
 @RestController
 @RequestMapping("/front/message")
 public class FrontMessageController {
@@ -29,7 +33,7 @@ public class FrontMessageController {
     public R list(@RequestParam(defaultValue = "1") Integer current,
                   @RequestParam(defaultValue = "10") Integer size) {
 
-        // 1. 分页查询所有“一级留言” (rootMessageId 为 NULL)
+        // 1. 分页查询所有"一级留言" (rootMessageId 为 NULL)
         Page<Message> page = new Page<>(current, size);
         LambdaQueryWrapper<Message> rootWrapper = new LambdaQueryWrapper<>();
         rootWrapper.isNull(Message::getRootMessageId)

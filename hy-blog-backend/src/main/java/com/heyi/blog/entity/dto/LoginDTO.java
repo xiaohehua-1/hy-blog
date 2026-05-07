@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
- * 登录请求参数：用于管理员后台登录校验
+ * 登录请求参数，用于管理员后台登录表单校验
+ * username/password 均为必填字段
  */
 @Data
 public class LoginDTO implements Serializable {

@@ -4,6 +4,9 @@ import lombok.Data;
 
 import java.io.Serializable;
 
+/**
+ * 音乐查询条件，支持按歌名和歌手模糊搜索
+ */
 @Data
 public class MusicQuery implements Serializable {
     private Integer pageNum = 1;

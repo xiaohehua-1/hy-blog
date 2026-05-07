@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 /**
- * 后台文章评论管理 Controller
- * 作用：管理游客在文章下的所有评论，含关键字搜索、删除，以及站长回复功能。
+ * 后台文章评论管理控制器
+ * 负责评论的关键字搜索、删除及站长回复，查询时通过 VO 补全文章标题
  */
 @RestController
 @RequestMapping("/admin/comment")
@@ -31,11 +31,8 @@ public class AdminCommentController {
     private BlogService blogService;
 
     /**
-     * 获取评论列表（支持分页和关键字搜索）
-     *
-     * 【避坑思考】：为什么要查出数据后再转成 CommentVO？
-     * 因为单凭 comment 表里的 blog_id，管理员不知道这是哪篇文章的评论。
-     * 这里通过代码层循环补全 blogTitle，不仅让前台表格显示更友好，还避免了写复杂的 JOIN 连表 SQL。
+     * 分页查询评论列表，支持按内容/昵称模糊搜索
+     * 查询后转为 CommentVO 补全文章标题，避免 JOIN 联表 SQL
      */
     @GetMapping("/list")
     public R list(@RequestParam(defaultValue = "1") Integer pageNum,
@@ -81,12 +78,12 @@ public class AdminCommentController {
 
     /**
      * 站长后台回复评论
-     * 【重要优化】：统一规范了站长的身份标识、头像兜底和归属校验。
+     * 自动设置管理员标识、补全昵称/头像，校验文章归属防止空指针
      */
     @PostMapping("/reply")
     @BlogLog("后台回复文章评论")
     public R reply(@RequestBody Comment comment) {
-        // 1. 设置站长标识，前端靠这个布尔值来渲染醒目的“站长”标签
+        // 1. 设置站长标识，前端靠这个布尔值来渲染醒目的"站长"标签
         comment.setAdminComment(true);
         comment.setCreateTime(LocalDateTime.now());
         comment.setDeleted(0);

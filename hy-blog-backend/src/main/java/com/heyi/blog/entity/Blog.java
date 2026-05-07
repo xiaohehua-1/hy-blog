@@ -12,8 +12,8 @@ import java.util.List;
 import java.io.Serializable;
 
 /**
- * 博客文章实体
- * 对应表: t_blog
+ * 博客文章实体，对应 t_blog 表
+ * 包含文章核心属性（标题、内容、发布状态、推荐等）及关联的类型/标签冗余字段
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

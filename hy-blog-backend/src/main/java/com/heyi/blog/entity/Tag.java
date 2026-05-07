@@ -9,7 +9,8 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 
 /**
- * 标签实体类 (ID 修正为 Long)
+ * 标签实体，对应 t_tag 表
+ * 主键为 Long 类型，与 BlogTag.tagId 保持一致
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

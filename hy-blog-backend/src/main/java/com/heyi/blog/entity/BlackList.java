@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * IP黑名单实体类
+ * IP 黑名单实体，对应 t_black_list 表
+ * 用于拦截恶意访问，控制 IP 访问权限
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

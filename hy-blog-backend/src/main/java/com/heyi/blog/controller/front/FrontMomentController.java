@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 
+/**
+ * 前台动态（朋友圈）控制器
+ * 提供动态列表、随机动态、点赞及评论的发布与查看
+ */
 @RestController
 @RequestMapping("/front/moment")
 public class FrontMomentController {
@@ -24,7 +28,9 @@ public class FrontMomentController {
     @Autowired
     private MomentCommentMapper momentCommentMapper;
 
-    // 1. 获取动态列表
+    /**
+     * 获取公开动态分页列表（排除私密动态）
+     */
     @GetMapping("/list")
     public R list(@RequestParam(defaultValue = "1") Integer current,
                   @RequestParam(defaultValue = "9") Integer size) {
@@ -32,7 +38,9 @@ public class FrontMomentController {
         return R.ok().data("page", page);
     }
 
-    // 2. 获取随机动态
+    /**
+     * 随机获取一条公开动态
+     */
     @GetMapping("/random")
     public R random() {
         Moment moment = momentService.getRandomMoment();
@@ -40,14 +48,18 @@ public class FrontMomentController {
         return R.ok().data("data", moment);
     }
 
-    // 3. 点赞动态
+    /**
+     * 动态点赞（点赞数 +1）
+     */
     @PostMapping("/like/{id}")
     public R like(@PathVariable Long id) {
         momentService.likeMoment(id);
         return R.ok();
     }
 
-    // 4. 【评论发布接口】保存到 t_moment_comment 表
+    /**
+     * 提交动态评论，补全默认昵称和头像后写入 t_moment_comment 表
+     */
     @PostMapping("/comment")
     public R saveComment(@RequestBody MomentComment comment) {
         if (comment.getMomentId() == null) return R.error("参数错误：动态ID不能为空");
@@ -68,7 +80,9 @@ public class FrontMomentController {
         return R.ok().message("评论成功");
     }
 
-    // 5. 【评论列表接口】查 t_moment_comment 表
+    /**
+     * 查询指定动态的评论分页列表（仅返回未删除的）
+     */
     @GetMapping("/comment/list/{momentId}")
     public R getCommentList(@PathVariable Long momentId,
                             @RequestParam(defaultValue = "1") Integer current,

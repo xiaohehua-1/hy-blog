@@ -8,7 +8,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 博客-标签关联实体 (ID 修正为 Long)
+ * 博客-标签关联实体，对应 t_blog_tag 多对多中间表
+ * 主键及外键均为 Long 类型，与 Blog.id、Tag.id 保持一致
  */
 @Data
 @TableName("t_blog_tag")

@@ -10,6 +10,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 动态/说说实体，对应 t_moment 表
+ * 支持定时发布、私密、置顶等特性
+ */
 @Data
 @TableName("t_moment")
 public class Moment implements Serializable {

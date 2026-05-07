@@ -9,7 +9,9 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 实体父类，包含创建时间和更新时间
+ * 实体基类，提供所有实体共享的创建时间和更新时间字段
+ * 配合 MyBatis-Plus 自动填充策略使用
+ * 子类继承后自动拥有 createTime / updateTime 并序列化为标准日期格式
  */
 @Data
 public class BaseEntity implements Serializable {

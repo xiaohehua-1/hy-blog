@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 前台站点配置控制器
+ * 提供站点全局信息（站长介绍、社交链接等）给前端页面渲染
+ */
 @RestController
 @RequestMapping("/front/config")
 public class FrontConfigController {

@@ -15,9 +15,18 @@ import com.heyi.blog.utils.R;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+/**
+ * 用户业务实现类
+ *
+ * 提供登录认证、用户 CRUD 及密码管理。
+ * 密码使用 BCrypt 加盐哈希存储，登录态通过 Sa-Token 管理。
+ */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    /**
+     * 后台分页查询用户，支持按用户名/昵称模糊搜索
+     */
     @Override
     public IPage<User> pageAdminUsers(UserQuery query) {
         Page<User> page = new Page<>(query.getPageNum(), query.getPageSize());
@@ -28,33 +37,42 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.page(page, wrapper);
     }
 
+    /**
+     * 新增用户，校验账号唯一性后使用 BCrypt 加密密码
+     */
     @Override
     public R saveUser(User user) {
         if (checkUsernameUnique(user.getUsername(), null)) {
             return R.error("账号已存在");
         }
 
-        // === 修改点 1: 使用 BCrypt 加密 ===
-        // 自动加盐，每次加密结果都不一样，非常安全
+        // BCrypt.hashpw 自动生成随机盐并嵌入密文，每次加密结果不同
         String targetPwd = BCrypt.hashpw(user.getPassword());
         user.setPassword(targetPwd);
 
+        // 未上传头像时使用默认头像
         if (!StringUtils.hasText(user.getAvatar())) {
             user.setAvatar("https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png");
         }
         return this.save(user) ? R.success().message("创建成功") : R.error("创建失败");
     }
 
+    /**
+     * 更新用户资料，密码置空防止被误覆盖
+     */
     @Override
     public R updateUser(User user) {
         if (checkUsernameUnique(user.getUsername(), user.getId())) {
             return R.error("账号已存在");
         }
-        // 防止密码被误修改
+        // 将 password 设为 null，MyBatis-Plus 更新时会跳过 null 字段，避免清空密码
         user.setPassword(null);
         return this.updateById(user) ? R.success().message("更新成功") : R.error("更新失败");
     }
 
+    /**
+     * 修改密码：校验旧密码正确后，使用 BCrypt 加密新密码
+     */
     @Override
     public R updatePassword(com.heyi.blog.entity.dto.UpdateUserPwdDTO dto) {
         User user = this.getById(dto.getId());
@@ -62,19 +80,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return R.error("用户不存在");
         }
 
-        // === 修改点 2: 校验旧密码 ===
-        // checkpw(明文, 数据库里的密文)
+        // BCrypt.checkpw 自动从密文中提取盐值，比对明文密码
         if (!BCrypt.checkpw(dto.getOldPassword(), user.getPassword())) {
             return R.error("旧密码错误");
         }
 
-        // === 修改点 3: 加密新密码 ===
         String newPwd = BCrypt.hashpw(dto.getNewPassword());
         user.setPassword(newPwd);
 
         return this.updateById(user) ? R.success().message("密码修改成功") : R.error("修改失败");
     }
 
+    /**
+     * 删除用户，禁止删除当前登录账号（防止把自己删掉后无法操作）
+     */
     @Override
     public R deleteUser(Long id) {
         if (id.equals(StpUtil.getLoginIdAsLong())) {
@@ -83,6 +102,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.removeById(id) ? R.success().message("删除成功") : R.error("删除失败");
     }
 
+    /**
+     * 登录认证：查用户 → 验密码 → 签发 token
+     * 统一返回"用户名或密码错误"避免泄露账号存在性
+     */
     @Override
     public R login(LoginDTO loginDTO) {
         String username = loginDTO.getUsername();
@@ -96,17 +119,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return R.error("用户名或密码错误");
         }
 
-        // === 修改点 4: 登录校验 ===
-        // BCrypt 甚至不需要知道盐是什么，它会从密文中自动提取
+        // BCrypt.checkpw 从密文中自动提取盐值进行比对
         if (!BCrypt.checkpw(password, user.getPassword())) {
             return R.error("用户名或密码错误");
         }
 
+        // Sa-Token 登录，用户ID作为登录标识
         StpUtil.login(user.getId());
+        // 返回前清除密码，避免敏感信息泄露到前端
         user.setPassword(null);
         return R.success().data("token", StpUtil.getTokenInfo().tokenValue).data("user", user);
     }
 
+    /**
+     * 校验用户名唯一性，编辑时排除自身ID
+     */
     private boolean checkUsernameUnique(String username, Long currentId) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);

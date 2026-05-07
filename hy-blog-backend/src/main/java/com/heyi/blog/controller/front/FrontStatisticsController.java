@@ -22,6 +22,10 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 前台站点统计控制器
+ * 汇总浏览量（Redis）、文章/评论/留言数（DB），并支持前端上报 PV
+ */
 @RestController
 @RequestMapping("/front/statistics")
 public class FrontStatisticsController {

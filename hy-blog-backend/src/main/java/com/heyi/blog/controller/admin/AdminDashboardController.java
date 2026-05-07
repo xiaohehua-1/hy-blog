@@ -18,6 +18,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 后台仪表盘控制器
+ * 聚合首页概览数据、分类构成（饼图）、评论/留言/访问趋势（折线图）
+ * 支持按周/月/年切换统计维度
+ */
 @RestController
 @RequestMapping("/admin/dashboard")
 public class AdminDashboardController {
@@ -29,6 +34,9 @@ public class AdminDashboardController {
     @Autowired private MessageService messageService;
     @Autowired private SysLogService sysLogService;
 
+    /**
+     * 获取仪表盘统计数据，type 支持 week / month / year，默认 week
+     */
     @GetMapping("/stats")
     public R stats(@RequestParam(defaultValue = "week") String type) {
         DashboardVO vo = new DashboardVO();

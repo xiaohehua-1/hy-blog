@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 系统操作日志实体类
+ * 系统操作日志实体，对应 t_sys_log 表
+ * 记录每次请求的操作人、IP、UA、请求参数、来源等信息，用于审计追踪
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

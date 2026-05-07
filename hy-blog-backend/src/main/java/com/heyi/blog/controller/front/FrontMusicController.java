@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
+/**
+ * 前台音乐播放器控制器
+ * 返回已启用的背景音乐列表，按上传时间倒序
+ */
 @RestController
 @RequestMapping("/front/music")
 public class FrontMusicController {

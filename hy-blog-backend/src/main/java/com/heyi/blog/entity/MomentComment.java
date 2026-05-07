@@ -6,6 +6,10 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * 动态评论实体，对应 t_moment_comment 表
+ * 支持层级回复（根评论/父评论）和 IP 归属地记录
+ */
 @Data
 @TableName("t_moment_comment")
 public class MomentComment implements Serializable {
@@ -24,7 +28,11 @@ public class MomentComment implements Serializable {
     private String avatar;
     private String address;       // 网址
 
+    /**
+     * 获取头像：管理员评论统一返回站长头像，普通用户返回自身头像
+     */
     public String getAvatar() {
+        // 使用 Boolean.TRUE.equals 避免 adminComment 为 null 时 NPE
         if (Boolean.TRUE.equals(adminComment)) {
             return "/src/assets/images/me.jpg";
         }

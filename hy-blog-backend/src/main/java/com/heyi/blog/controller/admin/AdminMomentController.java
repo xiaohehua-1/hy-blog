@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 后台动态管理控制器
+ * 负责动态（说说）的发布、编辑、删除及分页查询
+ */
 @RestController
 @RequestMapping("/admin/moment")
 public class AdminMomentController {
@@ -16,7 +20,9 @@ public class AdminMomentController {
     @Autowired
     private MomentService momentService;
 
-    // 分页列表
+    /**
+     * 分页查询动态列表，支持按内容模糊搜索（含私密动态）
+     */
     @GetMapping("/list")
     public R list(@RequestParam(defaultValue = "1") Integer current,
                   @RequestParam(defaultValue = "10") Integer size,
@@ -25,14 +31,15 @@ public class AdminMomentController {
         return R.ok().data("page", page);
     }
 
-    // 发布/保存
-    // 在 save 方法中补充逻辑
+    /**
+     * 发布/保存动态，未指定发布时间则默认立即发布
+     */
     @PostMapping("/save")
     public R save(@RequestBody Moment moment) {
         moment.setCreateTime(LocalDateTime.now());
         moment.setUpdateTime(LocalDateTime.now());
 
-        // 如果前端没传 publishTime，则默认立即发布
+        // 前端未传 publishTime 则立即发布，避免 null 导致定时任务异常
         if (moment.getPublishTime() == null) {
             moment.setPublishTime(LocalDateTime.now());
         }
@@ -42,7 +49,9 @@ public class AdminMomentController {
         return R.ok();
     }
 
-    // 更新
+    /**
+     * 更新动态
+     */
     @PutMapping("/update")
     public R update(@RequestBody Moment moment) {
         moment.setUpdateTime(LocalDateTime.now());
@@ -50,21 +59,27 @@ public class AdminMomentController {
         return R.ok();
     }
 
-    // 删除
+    /**
+     * 删除单条动态
+     */
     @DeleteMapping("/{id}")
     public R delete(@PathVariable Long id) {
         momentService.removeById(id);
         return R.ok();
     }
 
-    // 批量删除
+    /**
+     * 批量删除动态
+     */
     @DeleteMapping("/batch")
     public R deleteBatch(@RequestBody List<Long> ids) {
         momentService.removeBatchByIds(ids);
         return R.ok();
     }
 
-    // 获取详情
+    /**
+     * 获取动态详情（用于编辑回显）
+     */
     @GetMapping("/{id}")
     public R info(@PathVariable Long id) {
         return R.ok().data("data", momentService.getById(id));

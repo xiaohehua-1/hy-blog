@@ -10,10 +10,17 @@ import com.heyi.blog.service.SysLogService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+/**
+ * 系统日志业务实现类
+ *
+ * 提供操作日志的分页查询，支持按 IP 模糊搜索。
+ */
 @Service
 public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> implements SysLogService {
 
-    // 你需要在接口 SysLogService 中定义这个方法
+    /**
+     * 分页查询系统日志，按创建时间倒序
+     */
     public IPage<SysLog> pageSysLogs(Integer pageNum, Integer pageSize, String ip) {
         Page<SysLog> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SysLog> wrapper = new LambdaQueryWrapper<>();

@@ -22,10 +22,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 标签业务实现类 (纯净后台版)
+ * 标签业务实现类
+ *
+ * 提供标签 CRUD、文章-标签关联查询及前台标签云统计。
+ * 批量查询方法用于解决文章列表的 N+1 问题。
  */
 @Service
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {
+
+    @Autowired
+    private BlogTagMapper blogTagMapper;
 
     @Override
     public IPage<Tag> pageTags(Page<Tag> page) {
@@ -37,10 +43,12 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return this.list();
     }
 
+    /**
+     * 新增标签，校验ID和名称唯一性
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R saveTag(Tag tag) {
-        // 1. 检查名称是否重复
         if (tag.getId() != null && this.getById(tag.getId()) != null) {
             return R.error("该ID已存在，请重新输入");
         }
@@ -51,10 +59,12 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return this.save(tag) ? R.success() : R.error("添加失败");
     }
 
+    /**
+     * 更新标签，名称唯一性校验时排除自身
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R updateTag(Tag tag) {
-        // 1. 检查名称是否重复 (排除自己)
         Tag exist = this.getOne(new LambdaQueryWrapper<Tag>().eq(Tag::getName, tag.getName()));
         if (exist != null && !exist.getId().equals(tag.getId())) {
             return R.error("该标签名称已存在");
@@ -62,19 +72,21 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return this.updateById(tag) ? R.success() : R.error("更新失败");
     }
 
+    /**
+     * 删除标签（预留：可在此处增加"有文章引用则禁止删除"的判断）
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R deleteTag(Long id) {
-        // 后续如果需要“有文章引用则禁止删除”的逻辑，可以在这里加
         return this.removeById(id) ? R.success() : R.error("删除失败");
     }
-    // 在 TagServiceImpl 中注入 BlogTagMapper
-    @Autowired
-    private BlogTagMapper blogTagMapper;
 
+    /**
+     * 查询指定文章的所有标签（通过中间表 t_blog_tag）
+     */
     @Override
     public List<Tag> getTagsByBlogId(Long blogId) {
-        // 1. 先查中间表，找出关联的 tag_id
+        // 1. 查中间表获取 tag_id 列表
         LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(BlogTag::getBlogId, blogId);
         List<BlogTag> blogTags = blogTagMapper.selectList(wrapper);
@@ -83,33 +95,36 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             return new ArrayList<>();
         }
 
-        // 2. 提取 tag_id 列表
+        // 2. 提取 tag_id，批量查询标签详情
         List<Long> tagIds = blogTags.stream()
                 .map(BlogTag::getTagId)
                 .collect(Collectors.toList());
 
-        // 3. 查 tag 表
         return baseMapper.selectBatchIds(tagIds);
     }
 
+    /**
+     * 批量获取多篇文章的标签映射，一次查询避免 N+1
+     *
+     * @param blogIds 文章ID列表
+     * @return Map<blogId, 标签列表>
+     */
     @Override
     public Map<Long, List<Tag>> getTagsByBlogIds(List<Long> blogIds) {
         if (blogIds == null || blogIds.isEmpty()) return new HashMap<>();
 
-        // 1. 批量查询关联关系
+        // 1. 批量查询中间表关联关系
         List<BlogTag> allRelations = blogTagMapper.selectList(
                 new LambdaQueryWrapper<BlogTag>().in(BlogTag::getBlogId, blogIds)
         );
         if (allRelations.isEmpty()) return new HashMap<>();
 
-        // 2. 提取所有涉及到的 TagId
+        // 2. 提取所有 tagId 并批量查询标签详情
         Set<Long> tagIds = allRelations.stream().map(BlogTag::getTagId).collect(Collectors.toSet());
-        
-        // 3. 批量查询 Tag 详情并建立 ID 映射
         Map<Long, Tag> tagMap = this.selectBatchIds(new ArrayList<>(tagIds)).stream()
                 .collect(Collectors.toMap(Tag::getId, tag -> tag));
 
-        // 4. 按 BlogId 分组
+        // 3. 按 blogId 分组，Collectors.mapping 直接映射为 Tag 对象
         return allRelations.stream().collect(Collectors.groupingBy(
                 BlogTag::getBlogId,
                 Collectors.mapping(rel -> tagMap.get(rel.getTagId()), Collectors.toList())
@@ -121,28 +136,32 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return baseMapper.selectBatchIds(ids);
     }
 
+    /**
+     * 前台标签云：统计每个标签下已发布文章的数量
+     *
+     * 使用 inSql 子查询过滤未发布文章，在内存中分组统计避免多次 DB 查询。
+     */
     @Override
     public List<Map<String, Object>> listNameAndCount() {
         // 1. 获取所有标签
         List<Tag> tags = this.list();
 
-        // 2. 获取所有“已发布文章”的标签关联关系
-        // 等价 SQL: SELECT * FROM t_blog_tag WHERE blog_id IN (SELECT id FROM t_blog WHERE published = 1)
+        // 2. 只统计已发布文章的标签关联
         LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
         wrapper.inSql(BlogTag::getBlogId, "select id from t_blog where published = 1");
         List<BlogTag> relationList = blogTagMapper.selectList(wrapper);
 
-        // 3. 在内存中分组统计 (TagId -> Count)
+        // 3. 内存分组统计：TagId → 出现次数
         Map<Long, Long> countMap = relationList.stream()
                 .collect(Collectors.groupingBy(BlogTag::getTagId, Collectors.counting()));
 
-        // 4. 组装结果
+        // 4. 组装标签名称 + 文章数量，无文章的标签 count=0
         List<Map<String, Object>> result = new ArrayList<>();
         for (Tag tag : tags) {
             Map<String, Object> map = new HashMap<>();
             map.put("id", tag.getId());
             map.put("name", tag.getName());
-            // 获取数量，如果为 null 则为 0
+            // getOrDefault 处理无关联文章的标签
             map.put("count", countMap.getOrDefault(tag.getId(), 0L));
             result.add(map);
         }

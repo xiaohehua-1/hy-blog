@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 
 /**
  * 博客文章业务实现类
+ *
+ * 核心职责：文章增删改查 + 标签关联维护 + 分类/标签批量填充。
+ * 所有写操作使用 @Transactional 保证一致性。
  */
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -40,52 +43,58 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Autowired private BlogMapper blogMapper;
     @Autowired private BlogConvertMapper blogConvertMapper;
 
+    /**
+     * 后台多条件分页查询，支持标题/分类/推荐/发布状态/版权/标签筛选
+     */
     @Override
     public IPage<Blog> pageAdminBlogs(BlogQuery query) {
         Page<Blog> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<Blog> wrapper = new LambdaQueryWrapper<>();
 
-        // 1. 标题模糊查询
+        // 条件动态拼接：仅参数非空时才生效，避免无效 WHERE 子句
         wrapper.like(StringUtils.hasText(query.getTitle()), Blog::getTitle, query.getTitle());
-        // 2. 分类精准查询
         wrapper.eq(query.getTypeId() != null, Blog::getTypeId, query.getTypeId());
-        // 3. 推荐精准查询 (补回)
         wrapper.eq(query.getRecommend() != null, Blog::getRecommend, query.getRecommend());
-        // 4. 发布状态查询
         wrapper.eq(query.getPublished() != null, Blog::getPublished, query.getPublished());
-        // 5. 版权类型查询 (补回)
         wrapper.eq(query.getCopyright() != null, Blog::getCopyright, query.getCopyright());
 
-        // 6. 标签关联查询 (子查询)
+        // 标签关联子查询：exists 方式比多表 JOIN 更简洁，避免结果集膨胀
         if (query.getTagId() != null) {
             wrapper.apply("exists (select 1 from t_blog_tag bt where bt.blog_id = t_blog.id and bt.tag_id = {0})", query.getTagId());
         }
 
-        // 7. 排序：原项目是按 updateTime 倒序
+        // 按更新时间倒序，最新修改的排在前面
         wrapper.orderByDesc(Blog::getUpdateTime);
 
         Page<Blog> blogPage = this.page(page, wrapper);
 
-        // 填充分类和标签名称 (优化：批量填充)
+        // 一次批量填充分类名和标签列表，避免每条记录单独查询（N+1 问题）
         if (!blogPage.getRecords().isEmpty()) {
             batchFillBlogDetails(blogPage.getRecords());
         }
         return blogPage;
     }
 
+    /**
+     * 新增文章并绑定标签，初始化统计字段为0
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R saveBlog(BlogDTO blogDTO, List<Long> tagIds) {
         Blog blog = blogConvertMapper.toBlog(blogDTO);
-        // 初始化统计数据
+        // 避免 null 值导致数据库异常或前端展示问题
         if(blog.getViews() == null) blog.setViews(0);
         if(blog.getCommentCount() == null) blog.setCommentCount(0);
 
         this.save(blog);
+        // 先保存文章获得ID，再写入标签关联
         saveBlogTags(blog.getId(), tagIds);
         return R.success().message("发布成功");
     }
 
+    /**
+     * 更新文章并重置标签：先清空旧关联，再写入新标签列表
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R updateBlog(BlogDTO blogDTO, List<Long> tagIds) {
@@ -93,31 +102,42 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
         this.updateById(blog);
 
-        // 重置标签：先删后加
+        // 先删后加策略：比增量比对更简单可靠，适合标签数据量小的场景
         blogTagMapper.delete(new LambdaQueryWrapper<BlogTag>().eq(BlogTag::getBlogId, blog.getId()));
         saveBlogTags(blog.getId(), tagIds);
         return R.success().message("更新成功");
     }
 
+    /**
+     * 获取文章详情及关联标签ID，用于后台编辑回显
+     */
     @Override
     public R getBlogDetail(Long id) {
         Blog blog = this.getById(id);
         if(blog == null) return R.error("文章不存在");
 
+        // 查询关联的标签ID列表，回显到编辑页的标签选择器
         List<BlogTag> blogTags = blogTagMapper.selectList(new LambdaQueryWrapper<BlogTag>().eq(BlogTag::getBlogId, id));
         List<Long> tagIds = blogTags.stream().map(BlogTag::getTagId).collect(Collectors.toList());
 
         return R.success().data("blog", blog).data("tagIds", tagIds);
     }
 
+    /**
+     * 删除文章及关联的标签记录
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R deleteBlog(Long id) {
+        // 先删关联，再删主记录，避免外键或孤儿数据
         blogTagMapper.delete(new LambdaQueryWrapper<BlogTag>().eq(BlogTag::getBlogId, id));
         this.removeById(id);
         return R.success().message("删除成功");
     }
 
+    /**
+     * 批量删除文章及关联的标签记录
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R deleteBatch(List<Long> ids) {
@@ -128,13 +148,12 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     @Override
     public Long getRandomBlogId() {
-        // 【修改点】：这里不能用 BlogMapper(大写)，要用 this.blogMapper(小写，即注入的那个变量)
-        // 你的 ServiceImpl 头部应该已经 @Autowired private BlogMapper blogMapper; 了
         return blogMapper.getRandomBlogId();
     }
 
-    // --- 私有辅助方法 ---
-
+    /**
+     * 逐条写入文章-标签关联（标签数少时直接循环插入，无需批量优化）
+     */
     private void saveBlogTags(Long blogId, List<Long> tagIds) {
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
@@ -147,12 +166,14 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     }
 
     /**
-     * 批量填充博客的分类和标签，解决 N+1 问题
+     * 批量填充文章的分类名称和标签列表，解决 N+1 查询问题
+     *
+     * 两步批量查询替代逐条查询：先查所有分类 → 再查所有标签关联 → 内存分组映射。
      */
     private void batchFillBlogDetails(List<Blog> blogs) {
         if (blogs == null || blogs.isEmpty()) return;
 
-        // 1. 批量填充分类名称
+        // 1. 收集所有 typeId，一次批量查询分类名称
         Set<Long> typeIds = blogs.stream()
                 .map(Blog::getTypeId)
                 .filter(id -> id != null)
@@ -167,18 +188,18 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
             });
         }
 
-        // 2. 批量填充标签列表
+        // 2. 收集所有 blogId，一次查询标签关联 + 标签详情
         List<Long> blogIds = blogs.stream().map(Blog::getId).collect(Collectors.toList());
         List<BlogTag> allBlogTags = blogTagMapper.selectList(
                 new LambdaQueryWrapper<BlogTag>().in(BlogTag::getBlogId, blogIds)
         );
         if (!allBlogTags.isEmpty()) {
-            // 获取所有涉及到的标签ID
+            // 批量查询标签详情并建立 ID→Tag 映射
             Set<Long> tagIds = allBlogTags.stream().map(BlogTag::getTagId).collect(Collectors.toSet());
             Map<Long, Tag> tagMap = tagMapper.selectBatchIds(tagIds).stream()
                     .collect(Collectors.toMap(Tag::getId, tag -> tag));
 
-            // 按 blogId 分组标签
+            // 按 blogId 分组标签列表，getOrDefault 处理无标签的文章
             Map<Long, List<Tag>> blogTagsMap = allBlogTags.stream()
                     .collect(Collectors.groupingBy(
                             BlogTag::getBlogId,

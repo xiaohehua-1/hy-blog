@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 友情链接实体类
+ * 友情链接实体，对应 t_friend 表
+ * 支持友链申请、审核流程：status 控制审核状态，reason 记录拒绝原因
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

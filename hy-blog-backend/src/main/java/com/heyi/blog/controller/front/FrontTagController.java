@@ -19,6 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 前台标签云控制器
+ * 返回标签名称及对应文章数量（Redis 缓存 1 小时）
+ */
 @RestController
 @RequestMapping("/front/tag")
 public class FrontTagController {
@@ -33,6 +37,9 @@ public class FrontTagController {
     // Redis Key 常量
     private static final String KEY_FRONT_TAGS = "blog:front:tags";
 
+    /**
+     * 获取标签列表（含各标签文章数），先查 Redis 缓存，未命中则查库并回写缓存
+     */
     @GetMapping("/list")
     public R list() {
         // 1. 尝试从缓存获取

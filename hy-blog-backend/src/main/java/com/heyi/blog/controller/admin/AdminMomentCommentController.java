@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 /**
- * 后台动态评论管理 Controller
- * 作用：管理朋友圈动态下方的网友评论。
+ * 后台动态评论管理控制器
+ * 负责动态评论的关键字搜索、删除及站长回复
  */
 @RestController
 @RequestMapping("/admin/momentComment")
@@ -55,7 +55,7 @@ public class AdminMomentCommentController {
 
     /**
      * 站长后台回复动态评论
-     * 【重要优化】：加入了站长头像兜底和归属关联校验。
+     * 自动设置管理员标识、补全昵称/头像，校验动态归属防止空指针
      */
     @PostMapping("/reply")
     @BlogLog("后台回复动态评论")

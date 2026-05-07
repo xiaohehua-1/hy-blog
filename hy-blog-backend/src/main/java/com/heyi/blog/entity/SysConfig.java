@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 系统配置实体类
+ * 系统配置实体，对应 t_sys_config 表
+ * 单例配置表，存储站长个人信息、社交链接、站点元数据等全局设置
  */
 @Data
 @TableName("t_sys_config")

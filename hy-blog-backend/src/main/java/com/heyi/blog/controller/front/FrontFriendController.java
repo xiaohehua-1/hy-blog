@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 前台友链控制器
+ * 提供友链列表展示（只返回审核通过的）和友链申请提交
+ */
 @RestController
 @RequestMapping("/front/friend")
 public class FrontFriendController {

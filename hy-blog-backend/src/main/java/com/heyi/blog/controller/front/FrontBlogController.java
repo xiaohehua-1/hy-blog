@@ -27,6 +27,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 前台博客展示控制器
+ * 提供博客列表（支持分类/标签/关键词筛选）、推荐列表（Redis 缓存）、随机阅读、详情页（浏览量统计）
+ */
 @RestController
 @RequestMapping("/front/blog")
 public class FrontBlogController {
@@ -158,10 +162,11 @@ public class FrontBlogController {
         return R.ok().data("list", voList);
     }
 
+    /**
+     * 随机获取一篇文章 ID（用于随机阅读入口）
+     */
     @GetMapping("/random")
-    // 【删除】去掉这行 @Operation 注解，因为它会导致报错
-    // @Operation(summary = "随机获取一篇文章ID")
-    public R getRandomBlog() { // 【注意】这里返回值改为 R，不要写 R<Long>
+    public R getRandomBlog() {
         Long blogId = blogService.getRandomBlogId();
         if (blogId == null) {
             return R.error("暂无文章");

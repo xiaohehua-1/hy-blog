@@ -9,6 +9,10 @@ import com.heyi.blog.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 后台音乐管理控制器
+ * 负责背景音乐的增删改查及启用/禁用控制
+ */
 @RestController
 @RequestMapping("/admin/music")
 public class AdminMusicController {
@@ -17,7 +21,7 @@ public class AdminMusicController {
     private MusicService musicService;
 
     /**
-     * 获取音乐列表
+     * 分页查询音乐列表，支持按歌名和歌手搜索
      */
     @PostMapping("/list")
     public R list(@RequestBody MusicQuery query) {
@@ -26,25 +30,22 @@ public class AdminMusicController {
     }
 
     /**
-     * 添加音乐
+     * 添加新音乐
      */
     @PostMapping("/save")
     @BlogLog("添加音乐")
     public R save(@RequestBody Music music) {
-        // 保存逻辑通常需要特定校验，保留调用Service
         return musicService.saveMusic(music);
     }
 
     /**
-     * 更新音乐（包含编辑信息 和 修改启用状态）
+     * 更新音乐信息（支持全量编辑和部分字段如 enabled 状态切换）
      */
     @PutMapping("/update")
     @BlogLog("更新音乐")
     public R update(@RequestBody Music music) {
-        // 直接使用 MyBatis-Plus 的 updateById
-        // 它可以处理部分更新（例如只传了 id 和 enabled），也可以处理全量编辑
+        // MyBatis-Plus updateById 自动忽略 null 字段，支持部分更新
         boolean result = musicService.updateById(music);
-
         if (result) {
             return R.success().message("更新成功");
         }
@@ -52,12 +53,11 @@ public class AdminMusicController {
     }
 
     /**
-     * 删除音乐
+     * 删除音乐（Service 层会同时清理服务器上的物理文件）
      */
     @DeleteMapping("/{id}")
     @BlogLog("删除音乐")
     public R delete(@PathVariable Integer id) {
-        // 删除逻辑可能涉及文件删除，建议保留调用Service
         return musicService.deleteMusic(id);
     }
 }

@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 前台评论控制器
+ * 提供博客评论的树形列表查询（含子评论装配）和评论提交
+ */
 @RestController
 @RequestMapping("/front/comment")
 public class FrontCommentController {

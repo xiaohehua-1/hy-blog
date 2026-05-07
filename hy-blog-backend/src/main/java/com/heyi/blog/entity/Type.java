@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 文章分类实体类
+ * 文章分类实体，对应 t_type 表
+ * 用于博客文章的一级分类管理
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

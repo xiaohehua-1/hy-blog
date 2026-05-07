@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 /**
- * 后台留言板管理 Controller
- * 作用：管理独立“留言板”页面的数据，包括查看、删除和站长回复功能。
+ * 后台留言板管理控制器
+ * 负责留言的关键字搜索、删除及站长回复
  */
 @RestController
 @RequestMapping("/admin/message")
@@ -53,12 +53,12 @@ public class AdminMessageController {
 
     /**
      * 站长后台回复留言
-     * 【重要优化】：加入了站长头像兜底和父节点校验，防止前台渲染崩溃。
+     * 自动设置管理员标识、补全昵称/头像兜底，防止前台渲染裂图
      */
     @PostMapping("/reply")
     @BlogLog("后台回复网站留言")
     public R reply(@RequestBody Message message) {
-        // 1. 打上站长尊贵标识（重点！）前端靠这个 adminMessage = true 来给回复贴“官方”标签
+        // 1. 打上站长尊贵标识（重点！）前端靠这个 adminMessage = true 来给回复贴"官方"标签
         message.setAdminMessage(true);
         message.setCreateTime(LocalDateTime.now());
         message.setDeleted(0); // 0 表示正常未删除

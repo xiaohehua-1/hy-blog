@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 背景音乐实体类
+ * 背景音乐实体，对应 t_music 表
+ * 管理站点背景音乐列表，支持按歌名/歌手搜索和启用/禁用控制
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

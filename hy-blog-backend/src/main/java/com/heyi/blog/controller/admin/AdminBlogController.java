@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 后台博客管理核心 Controller
- * 作用：整个后台最关键的模块！专门处理管理员写博客、改博客、删博客以及多条件查询博客的请求。
+ * 后台博客管理控制器
+ * 负责文章的多条件分页查询、发布、编辑、删除及批量删除
  */
 @RestController
 @RequestMapping("/admin/blog")
@@ -25,9 +25,8 @@ public class AdminBlogController {
 
     /**
      * 多条件分页查询博客列表
-     * 【重点思考】：按理说查询应该用 @GetMapping，但我这里特意改成了 @PostMapping。
-     * 因为博客的搜索条件太复杂了（比如按标题搜、按分类搜、按推荐状态搜），如果用 GET 把参数全拼在 URL 后面，
-     * 不仅容易超长报错，前端拼接起来也很痛苦。所以干脆封装成 BlogQuery 对象，用 POST 发送 JSON 数据，稳妥又清晰。
+     * 使用 @PostMapping 而非 @GetMapping：查询条件复杂（标题/分类/推荐/标签等），
+     * GET 拼参数易超长，POST JSON 传参更可靠
      */
     @PostMapping("/list")
     public R list(@RequestBody BlogQuery query) {
@@ -36,10 +35,8 @@ public class AdminBlogController {
     }
 
     /**
-     * 新增（发布）博客
-     * 【避坑点】：这里的参数用的是 BlogDTO，而不是数据库实体类 Blog。
-     * 为什么？因为发布博客时，前端传过来的不只有文章的标题和正文，还有一个数组格式的“标签ID列表(tagIds)”。
-     * 单个 Blog 实体类接不住这堆复杂数据，所以专门建了个 DTO (Data Transfer Object) 把它们打包接进来。
+     * 发布新文章
+     * 参数使用 BlogDTO（继承 Blog 并扩展 tagIds 数组），一次接收文章正文和所选标签
      */
     @PostMapping("/save")
     @BlogLog("发布文章")
@@ -49,8 +46,7 @@ public class AdminBlogController {
     }
 
     /**
-     * 修改博客
-     * 逻辑和保存类似，前端把改好的数据连同重新选择的标签一起通过 DTO 传过来。
+     * 更新文章（含标签关联），参数与新增一致
      */
     @PutMapping("/update")
     @BlogLog("更新文章")
@@ -59,9 +55,7 @@ public class AdminBlogController {
     }
 
     /**
-     * 根据 ID 获取博客详情
-     * 作用：主要是给前端的“编辑文章”页面用的。管理员点“编辑”按钮时，
-     * 前端要先调用这个接口，把原来的老数据（包括标题、正文、原来选了啥标签）查出来填到表单里，也就是“数据回显”。
+     * 获取文章详情（含标签列表），用于编辑页数据回显
      */
     @GetMapping("/{id}")
     public R detail(@PathVariable Long id) {
@@ -69,8 +63,7 @@ public class AdminBlogController {
     }
 
     /**
-     * 删除单篇博客
-     * 这里的 @PathVariable 是配合 URL 里的 {id} 使用的，直接从路径里抠出要删的博客 ID。
+     * 删除单篇文章
      */
     @DeleteMapping("/{id}")
     @BlogLog("删除文章")
@@ -79,8 +72,7 @@ public class AdminBlogController {
     }
 
     /**
-     * 批量删除博客
-     * 作用：前端勾选多篇文章后，把它们的 ID 组成一个数组传过来（List<Long>）。
+     * 批量删除文章，空列表保护防止执行无意义的 SQL
      */
     @DeleteMapping("/delete/batch")
     @BlogLog("批量删除文章")

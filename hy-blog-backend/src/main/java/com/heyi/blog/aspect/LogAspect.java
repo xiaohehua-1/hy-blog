@@ -25,9 +25,9 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 
 /**
- * 操作日志切面处理类
- * 作用：利用 Spring AOP 统一拦截加了 @BlogLog 注解的接口，自动获取请求 IP、参数并存到数据库里。
- * 这样就不用在每个 Controller 里面挨个去写记录日志的代码了，看着比较干净。
+ * 操作日志 AOP 切面
+ * 拦截所有 @BlogLog 注解的方法，自动采集请求 IP、URL、参数、UA 等信息写入 t_sys_log 表
+ * 整个 handleLog 包裹在 try-catch 中，日志记录失败不影响主业务
  */
 @Aspect
 @Component
@@ -37,16 +37,14 @@ public class LogAspect {
     private SysLogService sysLogService;
 
     /**
-     * 定义切点
-     * 也就是规定到底拦截哪些方法。这里指定只拦截贴了 @BlogLog 注解的。
-     * 因为像很多普通的查询接口（比如查博客列表）没必要记日志，不然日志表一下子就撑爆了。
+     * 切点：匹配所有标注 @BlogLog 的方法（仅记录需要审计的写操作，避免日志表膨胀）
      */
     @Pointcut("@annotation(com.heyi.blog.entity.annotation.BlogLog)")
     public void logPointCut() {}
 
     /**
-     * 方法执行成功后触发
-     * 只有业务没报错，成功走完了才去记日志。要是报错了的操作就不记了。
+     * 后置通知：目标方法正常返回后异步记录日志
+     * 仅记录成功操作，异常由全局异常处理器单独处理
      */
     @AfterReturning(value = "logPointCut()", returning = "jsonResult")
     public void saveLog(JoinPoint joinPoint, Object jsonResult) {
@@ -54,9 +52,7 @@ public class LogAspect {
     }
 
     /**
-     * 记日志的具体逻辑
-     * 注意这里整体加了 try-catch。因为记日志只是个附属功能，就算解析参数或者存数据库时报错了，
-     * 也不能抛出去影响用户本来的正常操作。
+     * 日志记录核心逻辑：采集注解描述、请求元信息、参数快照、UA 解析并持久化
      */
     protected void handleLog(final JoinPoint joinPoint, final Exception e) {
         try {
@@ -87,13 +83,11 @@ public class LogAspect {
             }
             String params = JSONUtil.toJsonStr(arguments);
 
-            // 4. 防止参数过长报错
-            // 如果是发博客之类的接口，正文可能会很长。这里做个截断，超过2000个字符就丢掉后面的，免得存库时报字段超长的错。
+            // 4. 参数截断：超过 2000 字符则截断，防止数据库字段溢出（如博客正文场景）
             if (params.length() > 2000) params = params.substring(0, 2000);
             sysLog.setParams(params);
 
-            // 5. 获取用户的浏览器和操作系统信息
-            // 借助 Hutool 工具类解析 User-Agent 请求头，代码简单很多
+            // 5. 使用 Hutool UserAgentUtil 解析 User-Agent 请求头，提取浏览器和操作系统
             String userAgentStr = request.getHeader("User-Agent");
             UserAgent ua = UserAgentUtil.parse(userAgentStr);
 
@@ -108,16 +102,17 @@ public class LogAspect {
             sysLog.setCreateTime(LocalDateTime.now());
             sysLog.setUpdateTime(LocalDateTime.now());
 
-            // 6. 保存进数据库
+            // 6. 持久化到 t_sys_log
             sysLogService.save(sysLog);
 
         } catch (Exception exp) {
+            // 日志记录异常仅打印堆栈，绝对不能向上抛出影响主业务流程
             exp.printStackTrace();
         }
     }
 
     /**
-     * 用反射拿到执行方法上的 @BlogLog 注解对象，主要为了拿它里面的 value（说明文字）
+     * 通过反射获取方法上的 @BlogLog 注解，提取 value 作为操作描述
      */
     private BlogLog getAnnotationLog(JoinPoint joinPoint) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();

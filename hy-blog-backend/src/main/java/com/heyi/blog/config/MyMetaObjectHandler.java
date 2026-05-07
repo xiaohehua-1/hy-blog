@@ -7,28 +7,29 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
- * MyBatis-Plus 自动填充配置类
- * 作用：帮我们在向数据库插入或更新数据时，自动补全时间和日期，省得每次在 Service 里手动 set。
+ * MyBatis-Plus 字段自动填充处理器
+ * 配合实体类 @TableField(fill = FieldFill.INSERT/UPDATE) 注解，自动补全 createTime 和 updateTime
+ * 避免在每个 Service 方法中手动设置时间
  */
 @Component
 public class MyMetaObjectHandler implements MetaObjectHandler {
 
     /**
-     * 插入数据时的自动填充
+     * 插入时自动填充 createTime 和 updateTime 为当前时间
      */
     @Override
     public void insertFill(MetaObject metaObject) {
-        // 新增数据时，自动把 createTime 和 updateTime 填为当前系统时间
+        // strictInsertFill：仅在字段值为 null 时才填充，不覆盖已有值
         this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, LocalDateTime.now());
         this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
     }
 
     /**
-     * 更新数据时的自动填充
+     * 更新时自动填充 updateTime 为当前时间
      */
     @Override
     public void updateFill(MetaObject metaObject) {
-        // 修改数据时，只更新 updateTime 字段为当前时间
+        // strictUpdateFill：仅在字段值为 null 时才填充
         this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
     }
 }

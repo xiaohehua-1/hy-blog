@@ -20,6 +20,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 前台分类控制器
+ * 返回全部分类列表（Redis 缓存 1 小时）
+ */
 @RestController
 @RequestMapping("/front/type")
 public class FrontTypeController {
@@ -34,6 +38,9 @@ public class FrontTypeController {
     // Redis Key 常量
     private static final String KEY_FRONT_TYPES = "blog:front:types";
 
+    /**
+     * 获取全部分类列表，先查 Redis 缓存，未命中则查库并回写缓存
+     */
     @GetMapping("/list")
     public R list() {
         // 1. 尝试从缓存获取

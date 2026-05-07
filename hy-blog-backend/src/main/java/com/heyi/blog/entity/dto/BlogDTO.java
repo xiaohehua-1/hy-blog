@@ -6,7 +6,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * 接收前端博客表单参数：扩展了标签ID数组
+ * 博客表单接收对象，继承 Blog 基础字段并扩展标签 ID 数组
+ * 前端编辑/新建文章时，标签以 Long[] 形式提交
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

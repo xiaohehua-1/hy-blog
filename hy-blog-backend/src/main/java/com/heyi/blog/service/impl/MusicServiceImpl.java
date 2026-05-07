@@ -12,9 +12,17 @@ import com.heyi.blog.utils.R;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+/**
+ * 音乐管理业务实现类
+ *
+ * 提供音乐列表的后台增删改查。删除操作仅移除数据库记录，不删除磁盘文件（毕设简化处理）。
+ */
 @Service
 public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music> implements MusicService {
 
+    /**
+     * 后台分页查询音乐，支持按标题/艺术家模糊搜索
+     */
     @Override
     public IPage<Music> pageAdminMusics(MusicQuery query) {
         Page<Music> page = new Page<>(query.getPageNum(), query.getPageSize());
@@ -27,9 +35,11 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music> implements
         return this.page(page, wrapper);
     }
 
+    /**
+     * 新增音乐，需确保文件已上传
+     */
     @Override
     public R saveMusic(Music music) {
-        // 简单校验
         if (!StringUtils.hasText(music.getFilePath())) {
             return R.error("请先上传音乐文件");
         }
@@ -41,9 +51,11 @@ public class MusicServiceImpl extends ServiceImpl<MusicMapper, Music> implements
         return this.updateById(music) ? R.success().message("更新成功") : R.error("更新失败");
     }
 
+    /**
+     * 删除音乐（仅删数据库记录，磁盘文件保留）
+     */
     @Override
     public R deleteMusic(Integer id) {
-        // 这里实际上还应该删除磁盘上的文件，为了毕设简单起见，暂时只删数据库记录
         return this.removeById(id) ? R.success().message("删除成功") : R.error("删除失败");
     }
 }

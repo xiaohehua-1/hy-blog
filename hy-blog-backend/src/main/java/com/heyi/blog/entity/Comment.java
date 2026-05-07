@@ -8,7 +8,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 文章评论实体类
+ * 文章评论实体，对应 t_comment 表
+ * 支持树形层级回复：rootCommentId（根评论）+ parentCommentId（直接父评论）
+ * children / replyNickname 为内存辅助字段，不持久化到数据库
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -27,9 +29,13 @@ public class Comment extends BaseEntity {
     private String avatar;                      // 头像
     private Boolean adminComment;               // 是否为管理员评论
 
+    /**
+     * 获取头像：管理员评论统一返回站长头像，普通用户返回自身头像
+     */
     public String getAvatar() {
+        // 使用 Boolean.TRUE.equals 避免 adminComment 为 null 时 NPE
         if (Boolean.TRUE.equals(adminComment)) {
-            return "/src/assets/images/me.jpg"; // 统一指向站长头像
+            return "/src/assets/images/me.jpg";
         }
         return avatar;
     }

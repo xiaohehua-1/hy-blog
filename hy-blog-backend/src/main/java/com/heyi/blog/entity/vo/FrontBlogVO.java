@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 前台博客列表展示对象
+ * 前台博客列表展示视图对象
+ * 用于首页文章卡片渲染，包含标题、描述、首图、标签、版权类型等展示字段
  */
 @Data
 public class FrontBlogVO {

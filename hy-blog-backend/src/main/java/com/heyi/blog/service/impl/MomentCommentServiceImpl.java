@@ -10,12 +10,20 @@ import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 
+/**
+ * 动态评论业务实现类
+ *
+ * 覆写 save/removeById，在评论增删后通过 WebSocket 广播通知前端刷新。
+ */
 @Service
 public class MomentCommentServiceImpl extends ServiceImpl<MomentCommentMapper, MomentComment> implements MomentCommentService {
 
     @Autowired
     private WebSocketServer webSocketServer;
 
+    /**
+     * 保存评论后广播 refresh_moment_comment，触发前端实时更新
+     */
     @Override
     public boolean save(MomentComment entity) {
         boolean saved = super.save(entity);
@@ -25,6 +33,9 @@ public class MomentCommentServiceImpl extends ServiceImpl<MomentCommentMapper, M
         return saved;
     }
 
+    /**
+     * 删除评论后广播 refresh_moment_comment，触发前端实时更新
+     */
     @Override
     public boolean removeById(Serializable id) {
         boolean removed = super.removeById(id);

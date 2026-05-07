@@ -17,6 +17,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 文件上传控制器
+ * 处理后台各类文件上传，通过白名单限制可上传的文件类型，防止恶意文件上传
+ * 文件按日期分目录存储（yyyy/MM/dd），文件名使用 UUID 避免冲突
+ */
 @RestController
 @RequestMapping("/admin/upload")
 public class UploadController {
@@ -24,7 +29,7 @@ public class UploadController {
     @Value("${file.upload-path}")
     private String uploadPath;
 
-    // 白名单：只允许图片、文档、音视频
+    // 白名单：仅允许常见图片、文档、压缩包、音视频格式
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
             "jpg", "jpeg", "png", "gif", "webp",
             "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "md",
@@ -32,6 +37,9 @@ public class UploadController {
             "mp4", "avi", "mp3", "wav", "flac"
     );
 
+    /**
+     * 上传文件，进行空值校验、后缀白名单过滤后存储到日期目录
+     */
     @PostMapping("/file")
     public R upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
