@@ -79,6 +79,11 @@
 </template>
 
 <script setup>
+/**
+ * 通用留言/评论列表组件
+ * 支持 message / blog / moment 三种模块，自动将扁平列表转为树形结构展示
+ * 分页 + 回复功能通过 emit 通知父组件
+ */
 import { ref, onMounted, defineProps, defineEmits, watch, defineExpose } from 'vue'
 import { Link, ChatLineRound } from '@element-plus/icons-vue'
 import defaultAvatarImg from '@/assets/images/avatar.png'
@@ -94,12 +99,15 @@ const emit = defineEmits(['reply'])
 const defaultAvatar = defaultAvatarImg
 const adminAvatar = adminAvatarImg
 const loading = ref(false)
-const treeList = ref([]) 
+const treeList = ref([])
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-// === 万能列表转树结构算法 ===
+/**
+ * 列表转树形结构
+ * 兼容已树形和扁平两种数据格式，自动补全 replyNickname
+ */
 const listToTree = (list) => {
   if (!list || list.length === 0) return []
   
@@ -107,7 +115,7 @@ const listToTree = (list) => {
   const roots = []
   const map = {}
 
-  // 1. 建立全量索引
+  // 1. 递归建立 id → 节点 的全量索引
   const buildMap = (nodes) => {
     nodes.forEach(node => {
       map[node.id] = node
@@ -118,7 +126,7 @@ const listToTree = (list) => {
   }
   buildMap(data)
 
-  // 2. 检查是否已经是树形结构
+  // 2. 数据已是树形结构则直接补 replyNickname 后返回，不再重复组装
   const isAlreadyTree = data.some(item => item.children && item.children.length > 0)
   
   if (isAlreadyTree) {
@@ -136,7 +144,7 @@ const listToTree = (list) => {
      return data
   }
 
-  // 3. 扁平列表转树形
+  // 3. 扁平列表转树形：根据 rootCommentId/rootMessageId 挂载子节点
   data.forEach(item => { item.children = [] })
 
   data.forEach(item => {
@@ -156,6 +164,7 @@ const listToTree = (list) => {
   return roots
 }
 
+/** 根据 module 和 targetId 查询分页数据，自动转树形 */
 const getList = async (page = 1) => {
   loading.value = true
   try {
@@ -172,7 +181,7 @@ const getList = async (page = 1) => {
     }
 
     const res = await request.get(url, { params })
-    
+    // 兼容多种后端返回格式：优先取 page 对象，不存在则清空
     if (res.data && res.data.page) {
       const records = res.data.page.records
       total.value = res.data.page.total
@@ -187,11 +196,14 @@ const getList = async (page = 1) => {
   }
 }
 
-// === 优化：中文时间格式解析 ===
+/**
+ * 时间格式化：转换为"年月日 时:分:秒"中文格式
+ * 将 - 替换为 / 以兼容 iOS Safari 的 Date 解析差异
+ */
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
   try {
-    // 兼容 iOS 和一些浏览器的 Date 解析，将 "-" 替换为 "/"
+    // iOS Safari 不支持 yyyy-MM-dd 格式，统一替换为 yyyy/MM/dd
     const dateObj = new Date(timeStr.replace('T', ' ').replace(/-/g, '/'))
     if (isNaN(dateObj.getTime())) return timeStr // 解析失败则原样返回
     

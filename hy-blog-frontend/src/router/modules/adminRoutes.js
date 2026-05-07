@@ -1,3 +1,9 @@
+/**
+ * 后台管理路由配置
+ * 所有后台页面共用 admin Layout（Sidebar + Header + AppMain）
+ * 子路由按功能模块分为：仪表盘、博客管理、网站运营、系统管理
+ * hidden: true 的路由不显示在侧边栏菜单中（如发布/编辑页）
+ */
 import Layout from '@/layout/admin/index.vue'
 
 const adminRoutes = [

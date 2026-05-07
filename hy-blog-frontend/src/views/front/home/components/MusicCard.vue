@@ -83,6 +83,11 @@
 </template>
 
 <script setup>
+/**
+ * 首页音乐播放器组件
+ * 显示封面（播放时旋转）、歌名/艺术家、进度条（可拖拽）、音量控制、上一首/下一首
+ * 音频加载失败时禁用播放按钮并恢复状态
+ */
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { getMusicList } from '@/api/music'
 import { 
@@ -97,12 +102,12 @@ const currentIndex = ref(0)
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
-const isDragging = ref(false) // 是否正在拖拽进度条
+const isDragging = ref(false) // 拖拽中跳过 timeupdate 更新，防止滑块闪烁
 const volume = ref(50)
-const isError = ref(false) // 是否加载出错
+const isError = ref(false)
 const defaultCover = 'https://picsum.photos/200/200?music'
 
-// 当前音乐对象
+/** 当前播放的音乐 */
 const currentMusic = computed(() => {
   return musicList.value[currentIndex.value] || {}
 })
@@ -125,6 +130,7 @@ watch(isPlaying, (val) => {
   })
 })
 
+/** 拉取已启用音乐列表，初始化首曲音量 */
 const fetchMusic = async () => {
   try {
     const res = await getMusicList()
@@ -140,31 +146,32 @@ const fetchMusic = async () => {
   }
 }
 
-// 切换播放/暂停
+/** 切换播放/暂停，出错状态不响应 */
 const togglePlay = () => {
   if (isError.value) return
   isPlaying.value = !isPlaying.value
 }
 
-// 切歌
+/** 切歌：重置状态后延迟 500ms 自动播放，等待 audio 加载 */
 const changeMusic = (index) => {
-  isPlaying.value = false // 先暂停
+  isPlaying.value = false
   isError.value = false
   currentTime.value = 0
   duration.value = 0
   currentIndex.value = index
-  // 这里的自动播放会在 audio 加载完 metadata 后通过 watch 触发吗？
-  // 不，建议在 onCanPlay 中处理，或者简单的延迟播放
+  // 延迟播放等待 audio 元素 src 切换完成
   setTimeout(() => {
     isPlaying.value = true
   }, 500)
 }
 
+/** 上一首，循环 */
 const playPrev = () => {
   let index = (currentIndex.value - 1 + musicList.value.length) % musicList.value.length
   changeMusic(index)
 }
 
+/** 下一首，循环 */
 const playNext = () => {
   let index = (currentIndex.value + 1) % musicList.value.length
   changeMusic(index)
@@ -213,15 +220,18 @@ const onSliderChange = (val) => {
   }
 }
 
+/** 音量滑块变化，同步到 audio 元素 */
 const onVolumeChange = (val) => {
   if(audioRef.value) audioRef.value.volume = val / 100
 }
 
+/** 切换静音/恢复音量 */
 const toggleMute = () => {
   volume.value = volume.value > 0 ? 0 : 50
   onVolumeChange(volume.value)
 }
 
+/** 秒数转 MM:SS 格式 */
 const formatTime = (time) => {
   if (!time || isNaN(time)) return '00:00'
   const minutes = Math.floor(time / 60)

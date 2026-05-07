@@ -74,12 +74,17 @@
 </template>
 
 <script setup>
+/**
+ * 站点简介侧边栏组件
+ * 显示站长头像、简介、联系方式、社交链接（B站/GitHub/CSDN）
+ */
 import { ref, onMounted } from 'vue'
 import { getSiteConfig } from '@/api/config'
 import { LocationInformation, InfoFilled, Message } from '@element-plus/icons-vue'
 
 const config = ref({})
 
+/** 拉取站点配置，填充页面信息 */
 const fetchConfig = async () => {
   try {
     const res = await getSiteConfig()

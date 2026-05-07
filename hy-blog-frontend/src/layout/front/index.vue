@@ -15,6 +15,11 @@
 </template>
 
 <script setup>
+/**
+ * 前台布局
+ * 上：NavBar 导航栏，中：router-view 内容区（支持页面切换动画），下：Footer 页脚
+ * 首页和动态页背景图顶天立地，NavBar 直接叠加在背景上（paddingTop=0）
+ */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
@@ -22,9 +27,10 @@ import Footer from './components/Footer.vue'
 
 const route = useRoute()
 
-// 定义需要“背景图顶天立地”的页面路径
+// 首页和动态页使用透明背景，NavBar 叠加在背景图之上
 const transparentPagePaths = ['/', '/moments']
 
+/** 当前路由是否为透明背景页，控制 main-content 的 paddingTop */
 const isTransparentPage = computed(() => {
   return transparentPagePaths.includes(route.path)
 })

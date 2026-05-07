@@ -9,6 +9,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台主内容区组件
+ * 包裹 <router-view> 并提供页面切换淡入淡出动画
+ */
 </script>
 
 <style scoped>

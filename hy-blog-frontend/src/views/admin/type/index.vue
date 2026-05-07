@@ -106,6 +106,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台文章分类管理页
+ * 支持分类的增删改查，弹窗表单含 ID 可选输入和名校验
+ */
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { Plus, Edit, Delete, Clock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

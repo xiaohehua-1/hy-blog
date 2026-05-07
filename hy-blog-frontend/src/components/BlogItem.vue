@@ -64,11 +64,17 @@
 </template>
 
 <script setup>
-import { Clock } from '@element-plus/icons-vue' // 引入时钟图标
+/**
+ * 博客文章卡片组件
+ * 展示标题、描述、作者、元信息（日期/浏览/评论）、标签、封面图
+ * 标签颜色通过 id 取模循环分配
+ */
+import { Clock } from '@element-plus/icons-vue'
 defineProps({
   data: { type: Object, required: true, default: () => ({}) }
 })
 
+// 标签配色池，通过 id % 6 循环分配，保证同一标签颜色一致
 const tagColors = [
   { bg: '#eef4ff', text: '#597ef7' },
   { bg: '#f6ffed', text: '#73d13d' },
@@ -78,6 +84,7 @@ const tagColors = [
   { bg: '#e6fffb', text: '#13c2c2' },
 ]
 
+/** 根据标签 ID 取模返回配色，同一标签在不同文章间颜色稳定 */
 const getTagStyle = (id) => {
   const index = id % tagColors.length
   const color = tagColors[index]

@@ -57,18 +57,22 @@
 </template>
 
 <script setup>
+/**
+ * 悬浮操作栏组件
+ * 固定右下角：赞赏弹窗、评论跳转、返回顶部
+ */
 import { ref, defineEmits } from 'vue'
 import { Present, ChatLineSquare, Top, Close } from '@element-plus/icons-vue'
 import wxQr from '@/assets/images/wx.jpg'
 import zfbQr from '@/assets/images/zfb.jpg'
 
-// 定义事件，通知父组件
 const emit = defineEmits(['click-comment'])
 
 const showReward = ref(false)
 const wxImg = wxQr
 const zfbImg = zfbQr
 
+/** 平滑滚动到页面顶部 */
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }

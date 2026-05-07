@@ -54,19 +54,23 @@
 </template>
 
 <script setup>
+/**
+ * 后台侧边栏菜单组件
+ * 根据 adminRoutes 动态渲染多级菜单，高亮当前路由，支持 hidden 控制显隐
+ */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import adminRoutes from '@/router/modules/adminRoutes'
 
 const route = useRoute()
 
-// 1. 获取菜单列表
+/** 从路由配置中提取 admin 下的子路由作为菜单项 */
 const adminRouteEntry = adminRoutes.find(r => r.path === '/admin')
 const menuList = computed(() => {
   return adminRouteEntry ? adminRouteEntry.children : []
 })
 
-// 2. 当前激活的菜单
+/** 高亮当前菜单项，优先使用 meta.activeMenu 指定的路径 */
 const activeMenu = computed(() => {
   const { meta, path } = route
   if (meta.activeMenu) {
@@ -75,7 +79,7 @@ const activeMenu = computed(() => {
   return path
 })
 
-// 3. 路径拼接助手
+/** 拼接父子路由路径为完整的 /admin/parent/child */
 const resolvePath = (parentPath, childPath) => {
   if (!childPath) {
     return `/admin/${parentPath}`

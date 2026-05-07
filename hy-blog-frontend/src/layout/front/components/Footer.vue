@@ -10,7 +10,7 @@
         </div>
 
         <div class="footer-center">
-          <span class="poem-text">“ {{ currentPoem }} ”</span>
+          <span class="poem-text">" {{ currentPoem }} "</span>
           <span class="refresh-icon" @click="refreshPoem" title="换一句">
             ↻
           </span>
@@ -28,9 +28,13 @@
 </template>
 
 <script setup>
+/**
+ * 前台页脚组件
+ * 显示品牌名、站点运行时长（每秒刷新）、随机诗句、ICP 备案号
+ */
 import { ref, onMounted, onUnmounted } from 'vue'
 
-// === 1. 诗句逻辑 ===
+// ===== 随机诗句 =====
 const poemList = [
   "雄关漫道真如铁，而今迈步从头越",
   "长风破浪会有时，直挂云帆济沧海",
@@ -45,21 +49,23 @@ const poemList = [
 ]
 const currentPoem = ref('')
 
+/** 随机切换诗句，与当前诗句重复时递归重试 */
 const refreshPoem = () => {
   const randomIndex = Math.floor(Math.random() * poemList.length)
   const newPoem = poemList[randomIndex]
   if (newPoem === currentPoem.value && poemList.length > 1) {
-    refreshPoem()
+    refreshPoem() // 避免连续两次展示同一句
   } else {
     currentPoem.value = newPoem
   }
 }
 
-// === 2. 运行时间逻辑 ===
+// ===== 运行时长时间 =====
 const runTime = ref('')
 let timer = null
 const START_DATE = '2026-01-27 00:00:00' 
 
+/** 计算站点从 START_DATE 至今的精确运行时长（天/时/分/秒） */
 const calcRunTime = () => {
   const start = new Date(START_DATE).getTime()
   const now = new Date().getTime()

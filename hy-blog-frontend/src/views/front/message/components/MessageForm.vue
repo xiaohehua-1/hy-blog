@@ -56,6 +56,10 @@
 </template>
 
 <script setup>
+/**
+ * 通用留言/评论表单组件
+ * 支持 message / blog / moment 三种模块，含邮箱头像自动解析、表情包、回复引用
+ */
 import { ref, reactive, computed, defineProps, defineEmits, defineExpose } from 'vue'
 import { EditPen, Message, User, Link, Position, CircleClose } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -77,11 +81,15 @@ const submitting = ref(false)
 const form = reactive({
   email: '', nickname: '', address: '', content: '', avatar: ''
 })
-const replyObj = ref(null) 
+const replyObj = ref(null)
 const placeholderText = ref('注意文明发言哦~')
 
 const finalAvatar = computed(() => form.avatar || defaultAvatarImg)
 
+/**
+ * 邮箱失焦时自动解析头像：
+ * QQ 邮箱 → QQ 头像 API，其他邮箱 → Gravatar (cravatar.cn 国内镜像)
+ */
 const handleEmailBlur = () => {
   const email = form.email.trim()
   if (!email) { form.avatar = ''; return }
@@ -99,15 +107,18 @@ const handleFocus = () => { if(!replyObj.value) placeholderText.value = '写下�
 const handleBlur = () => { if(!form.content && !replyObj.value) placeholderText.value = '注意文明发言哦~' }
 const onSelectEmoji = (emoji) => { form.content += emoji.i }
 
+/** 设置回复目标，更新 placeholder 提示 */
 const setReply = (item) => {
   replyObj.value = item
   placeholderText.value = `回复 @${item.nickname}: `
 }
+/** 取消回复状态 */
 const cancelReply = () => {
   replyObj.value = null
   placeholderText.value = '注意文明发言哦~'
 }
 
+/** 提交表单：校验必填 → 根据 module 选择 API → 发布成功通知父组件刷新 */
 const handleSubmit = async () => {
   if (!form.email || !form.nickname || !form.content) {
     return ElMessage.warning('请填写完整的 邮箱、昵称 和 内容')
@@ -128,6 +139,7 @@ const handleSubmit = async () => {
       url = '/front/message/save'
     }
 
+    // 回复状态下补全父子关系字段：comment 模块用 parentCommentId，message 模块用 parentMessageId
     if (replyObj.value) {
       if (props.module === 'moment' || props.module === 'blog') {
         data.parentCommentId = replyObj.value.id

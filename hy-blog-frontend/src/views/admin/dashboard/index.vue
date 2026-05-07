@@ -44,6 +44,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台仪表盘页面
+ * 概览卡片（6 项）+ 内容构成饼图 + 互动趋势折线图（周/月/年切换）
+ */
 import { ref, onMounted, onBeforeUnmount, reactive, markRaw } from 'vue'
 import request from '@/utils/request'
 import * as echarts from 'echarts'
@@ -64,6 +68,7 @@ const statList = ref([
   { label: '访问', value: 0, icon: markRaw(View), color: 'icon-cyan' }
 ])
 
+/** 渲染内容构成饼图，先 dispose 避免 ECharts 实例重复挂载 */
 const initPieChart = (data) => {
   if (pieChart) pieChart.dispose()
   pieChart = echarts.init(pieChartRef.value)
@@ -86,6 +91,7 @@ const initPieChart = (data) => {
   })
 }
 
+/** 渲染互动趋势折线图，minInterval:1 强制 Y 轴整数刻度 */
 const initLineChart = (data) => {
   if (lineChart) lineChart.dispose()
   lineChart = echarts.init(lineChartRef.value)

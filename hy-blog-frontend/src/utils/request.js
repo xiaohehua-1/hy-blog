@@ -1,19 +1,23 @@
+/**
+ * Axios 请求封装
+ * - 请求拦截器：自动从 localStorage 读取 token 注入 satoken 请求头
+ * - 响应拦截器：统一处理业务错误（code !== 20000）和 HTTP 401，token 失效自动踢回登录页
+ */
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-// 1. 创建 axios 实例
+// 创建 axios 实例，baseURL 通过 Vite 代理转发到后端
 const service = axios.create({
-  baseURL: '/api', // 这里会触发 vite.config.js 的代理
-  timeout: 5000 // 请求超时时间
+  baseURL: '/api',
+  timeout: 5000
 })
 
-// 2. 请求拦截器 (自动带上 Token)
+// 请求拦截器：自动附带 token
 service.interceptors.request.use(
   (config) => {
-    // 从 localStorage 获取 token
     const token = localStorage.getItem('token')
     if (token) {
-      // 【关键保留】你的后端使用的是 satoken 字段，千万别改
+      // 后端 Sa-Token 框架要求请求头字段名为 satoken，不能改
       config.headers['satoken'] = token
     }
     return config
@@ -23,50 +27,40 @@ service.interceptors.request.use(
   }
 )
 
-// 3. 响应拦截器 (统一处理结果)
+// 响应拦截器：统一错误处理 + token 失效检测
 service.interceptors.response.use(
   (response) => {
     const res = response.data
-    
-    // 如果后端返回的 code 不是 20000，说明有错误
+
     if (res.code !== 20000) {
-      
-      // 检测 Token 是否无效 ===
-      // 这里我加了几个判断条件，只要命中其中一个，就强制踢出
-      // 1. code 为 401 或 403 (常见权限错误码)
-      // 2. 错误信息里包含 "token" 和 "无效" (模糊匹配你之前遇到的提示)
-      const isTokenInvalid = 
-          res.code === 401 || 
-          res.code === 403 || 
+      // token 失效判定：HTTP 错误码 + 后端消息关键字双重匹配
+      const isTokenInvalid =
+          res.code === 401 ||
+          res.code === 403 ||
           (res.message && res.message.includes('token') && res.message.includes('无效')) ||
           (res.message && res.message.includes('过期'));
 
       if (isTokenInvalid) {
         ElMessage.error('登录状态已失效，请重新登录')
-        
-        // 1. 清除本地缓存
         localStorage.removeItem('token')
-        localStorage.removeItem('user') // 如果有的话
-        
-        // 2. 强制跳转回登录页 (延迟一下让用户看清提示)
+        localStorage.removeItem('user')
+        // 延迟 1s 跳转，让用户看清提示
         setTimeout(() => {
            window.location.href = '/login'
         }, 1000)
-        
         return Promise.reject(new Error('Token Invalid'))
       }
 
-      // 普通业务错误 (比如密码输错)
+      // 普通业务错误（如密码错误、参数校验失败）
       ElMessage.error(res.message || '系统错误')
       return Promise.reject(new Error(res.message || 'Error'))
     }
-    
-    return res // 直接返回后端的数据主体
+
+    return res
   },
   (error) => {
     console.error('请求错误:', error)
-    // 处理 HTTP 状态码层面的 401 ===
-    // 有时候后端不会返回 JSON，而是直接返回 HTTP 401
+    // HTTP 状态码层面的 401：后端直接返回 401 而非 JSON 时的兜底处理
     if (error.response && error.response.status === 401) {
       ElMessage.error('登录已过期，请重新登录')
       localStorage.removeItem('token')
@@ -76,7 +70,6 @@ service.interceptors.response.use(
     } else {
       ElMessage.error(error.message || '请求失败')
     }
-    
     return Promise.reject(error)
   }
 )

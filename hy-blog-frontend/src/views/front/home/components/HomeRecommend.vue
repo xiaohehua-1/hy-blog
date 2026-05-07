@@ -91,15 +91,19 @@
 </template>
 
 <script setup>
+/**
+ * 首页推荐文章组件
+ * 前三篇轮播展示，后四篇右侧列表展示，均从 Redis 缓存获取
+ */
 import { ref, onMounted, computed } from 'vue'
 import { getFrontRecommendList } from '@/api/blog'
 import { View, ChatDotRound } from '@element-plus/icons-vue'
 
 const recommendList = ref([])
 
-// 计算属性：前3篇轮播，后4篇列表
-const carouselList = computed(() => recommendList.value.slice(0, 3)) 
-const sideList = computed(() => recommendList.value.slice(3, 7))     
+// 前 3 篇进轮播，后 4 篇进右侧列表
+const carouselList = computed(() => recommendList.value.slice(0, 3))
+const sideList = computed(() => recommendList.value.slice(3, 7))
 
 const fetchData = async () => {
   try {
@@ -112,7 +116,7 @@ const fetchData = async () => {
   }
 }
 
-// 时间格式化：2025-10-10 17:42:14 -> 2025年10月10日 17:42:14
+/** 格式化时间：2025-10-10 17:42:14 → 2025年10月10日 17:42:14 */
 const formatDateCN = (timeStr) => {
   if (!timeStr) return ''
   const datePart = timeStr.split(' ')[0]

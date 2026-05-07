@@ -36,6 +36,10 @@
 </template>
 
 <script setup>
+/**
+ * 留言板页面
+ * MessageForm 提交 + MessageList 树形展示 + WebSocket 实时刷新
+ */
 import { ref, onMounted, onUnmounted } from 'vue'
 import MessageForm from './components/MessageForm.vue'
 import MessageList from './components/MessageList.vue'

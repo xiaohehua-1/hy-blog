@@ -69,6 +69,10 @@
 </template>
 
 <script setup>
+/**
+ * 归档页
+ * 时间轴布局（左右交替卡片），点击跳转文章详情
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getFrontBlogList } from '@/api/blog'

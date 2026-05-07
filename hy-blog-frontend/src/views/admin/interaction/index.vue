@@ -188,6 +188,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台互动管理页（Tab 切换）
+ * 文章评论 / 网站留言 / 动态评论三个 Tab，支持树形列表展示、关键字搜索、批量删除、站长回复
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Search, Refresh, ChatDotRound, Message, ChatLineSquare, Delete, ChatLineRound, Connection, ChatDotSquare } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -312,7 +316,7 @@ const handleDeleteSingle = (id) => {
   }).catch(() => {})
 }
 
-// 批量删除 (前端并发请求，无需修改后端接口)
+// 批量删除：改为串行执行，避免并发触发后端 WebSocket 写入冲突（TEXT_FULL_WRITING）
 const handleBatchDelete = () => {
   ElMessageBox.confirm(`确认永久删除选中的 ${selectedIds.value.length} 条记录吗?`, '警告', {
     confirmButtonText: '确定',
@@ -321,10 +325,10 @@ const handleBatchDelete = () => {
   }).then(async () => {
     loading.value = true
     const prefix = getUrlPrefix()
-    const promises = selectedIds.value.map(id => request.delete(`${prefix}/${id}`))
-    
     try {
-      await Promise.all(promises)
+      for (const id of selectedIds.value) {
+        await request.delete(`${prefix}/${id}`)
+      }
       ElMessage.success('批量删除成功')
       selectedIds.value = []
       handleSearch()

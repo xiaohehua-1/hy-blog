@@ -112,6 +112,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台动态管理列表页
+ * 支持按内容关键字搜索、批量删除，展示图片预览/外部链接/发布状态标签
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { Plus, Edit, Delete, Link as LinkIcon, Search, Refresh } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'

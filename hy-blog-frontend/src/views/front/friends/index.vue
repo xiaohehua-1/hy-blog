@@ -135,6 +135,10 @@
 </template>
 
 <script setup>
+/**
+ * 友链页面
+ * 展示友链申请要求和本站信息（可一键复制），申请表单 + 已通过友链卡片列表
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { getFriendList, applyFriendLink } from '@/api/friend'
 import { ElMessage } from 'element-plus'

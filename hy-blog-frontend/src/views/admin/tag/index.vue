@@ -106,6 +106,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台标签管理页
+ * 标签增删改查，ID 新增时可选（不填由后端自动生成）
+ */
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { Plus, Edit, Delete, Clock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

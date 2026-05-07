@@ -69,6 +69,11 @@
 </template>
 
 <script setup>
+/**
+ * 标签页
+ * 标签云（多选筛选）+ 博客文章分页列表
+ * 支持通过 URL query.id 进入时自动选中指定标签
+ */
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getFrontTagList } from '@/api/tag'

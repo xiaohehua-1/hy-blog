@@ -6,7 +6,8 @@
           <span class="panel-title">📜 系统日志</span>
         </div>
         <div class="filter-right">
-          </div>
+          <el-button type="danger" :icon="Delete" @click="handleClean">清理日志</el-button>
+        </div>
       </el-row>
     </el-card>
 
@@ -66,6 +67,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台操作日志页
+ * 按 IP 搜索，单条删除 + 按天数批量清理
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { Search, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -88,6 +93,27 @@ const getList = async () => {
 }
 
 const handleSearch = () => { queryParams.pageNum = 1; getList() }
+
+/**
+ * 清理 N 天前的日志，弹出输入框让管理员指定天数，默认 30 天
+ */
+const handleClean = () => {
+  ElMessageBox.prompt('请输入要清理多少天之前的日志', '清理日志', {
+    confirmButtonText: '确认清理',
+    cancelButtonText: '取消',
+    inputPattern: /^[1-9][0-9]*$/,
+    inputErrorMessage: '请输入正确的天数（正整数）',
+    inputValue: '30'
+  }).then(async ({ value }) => {
+    try {
+      const res = await request.delete('/admin/sys/log/clean', { params: { days: value } })
+      ElMessage.success(res.message || '清理成功')
+      getList()
+    } catch (e) {
+      ElMessage.error('清理失败')
+    }
+  }).catch(() => {})
+}
 
 const handleDelete = (row) => {
   ElMessageBox.confirm('确认删除该条日志?', '警告', { type: 'warning' }).then(async () => {

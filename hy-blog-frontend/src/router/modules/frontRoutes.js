@@ -1,6 +1,8 @@
-// src/router/modules/frontRoutes.js
-
-// 引入前台布局组件 (稍后在第三步创建)
+/**
+ * 前台路由配置
+ * 所有前台页面共用 FrontLayout（NavBar + 内容区 + Footer）
+ * 文章详情路由为 /article/:id，动态参数由页面组件消费
+ */
 import FrontLayout from '@/layout/front/index.vue'
 
 const frontRoutes = [

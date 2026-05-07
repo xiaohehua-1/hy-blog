@@ -38,9 +38,13 @@
 </template>
 
 <script setup>
+/**
+ * 动态跑马灯组件
+ * 轮播最新 10 条动态内容，悬停暂停，点击跳转动态列表页
+ */
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { Picture, Link, ArrowRight } from '@element-plus/icons-vue'
-import { getFrontMomentList } from '@/api/moment' // 改为获取列表
+import { getFrontMomentList } from '@/api/moment'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -48,7 +52,7 @@ const momentList = ref([])
 const currentIndex = ref(0)
 let timer = null
 
-// 当前展示的那一条
+/** 当前展示的动态 */
 const currentMoment = computed(() => {
   if (momentList.value.length === 0) return null
   return momentList.value[currentIndex.value]
@@ -56,6 +60,7 @@ const currentMoment = computed(() => {
 
 const hasImage = (item) => item && item.images && item.images.length > 0
 
+/** 文字截断，超出 len 追加 ... */
 const truncate = (str, len) => {
   if (!str) return ''
   return str.length > len ? str.substring(0, len) + '...' : str
@@ -63,16 +68,17 @@ const truncate = (str, len) => {
 
 const goToList = () => router.push('/moments')
 
-// 自动播放逻辑
+/** 启动轮播，4000ms 切换一次 */
 const startAutoPlay = () => {
   if (timer) clearInterval(timer)
   timer = setInterval(() => {
     if (momentList.value.length > 1) {
       currentIndex.value = (currentIndex.value + 1) % momentList.value.length
     }
-  }, 4000) // 5秒切换一次
+  }, 4000)
 }
 
+/** 暂停轮播（鼠标悬停） */
 const stopAutoPlay = () => {
   if (timer) clearInterval(timer)
 }

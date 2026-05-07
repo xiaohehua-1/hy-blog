@@ -166,6 +166,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台文章管理列表页
+ * 多条件筛选（标题/分类/标签/状态/推荐/版权）+ 批量删除
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { Search, Refresh, Plus, Delete, Edit, Picture } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

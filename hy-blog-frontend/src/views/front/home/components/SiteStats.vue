@@ -62,12 +62,18 @@
 </template>
 
 <script setup>
+/**
+ * 站点统计组件
+ * 展示访问量、博文、评论、留言的总数和今日新增
+ * 挂载时先上报 PV 再拉取数据
+ */
 import { ref, onMounted } from 'vue'
 import { getSiteStats, reportVisit } from '@/api/statistics'
 import { View, Document, ChatLineSquare, ChatDotSquare, Top } from '@element-plus/icons-vue'
 
 const stats = ref({})
 
+/** 上报 PV 后拉取最新统计数据 */
 const initData = async () => {
   try {
     // 1. 上报一次访问 (让 Redis +1)

@@ -170,6 +170,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台音乐管理页
+ * 歌名/歌手模糊搜索，封面+音乐文件上传，播放器试听，启用开关即时切换
+ */
 import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { Plus, Edit, Delete, Search, Refresh, Picture, Upload, Headset } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

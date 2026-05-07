@@ -107,13 +107,17 @@
 </template>
 
 <script setup>
+/**
+ * 后台网站配置页
+ * 站长信息、站点概览、社交链接、关于我（技能标签支持动态增删，以 JSON 存储）
+ */
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 
 const loading = ref(false)
 
-// 动态技能标签逻辑
+// 技能标签输入逻辑
 const inputValue = ref('')
 const dynamicSkills = ref([]) // 前端展示用的数组
 const inputVisible = ref(false)

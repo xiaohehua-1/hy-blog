@@ -132,6 +132,10 @@
 </template>
 
 <script setup>
+/**
+ * 动态发布/编辑页
+ * 支持图片拖拽排序（vuedraggable）、定位获取、定时发布、私密/置顶设置
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Position, ZoomIn, Delete, Back, Link } from '@element-plus/icons-vue' 
 import { useRoute, useRouter } from 'vue-router'

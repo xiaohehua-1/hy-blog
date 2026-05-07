@@ -14,6 +14,10 @@
 </template>
 
 <script setup>
+/**
+ * 阅读进度条组件
+ * 顶部细条 + 右侧垂直进度条（支持点击跳转和拖拽），内容不足以滚动时自动隐藏
+ */
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const readingProgress = ref(0)
@@ -21,16 +25,15 @@ const showVerticalProgress = ref(false)
 const progressTrackRef = ref(null)
 let isDragging = false
 
+/** 计算阅读百分比，底部 5px 容错避免浏览器精度导致无法到达 100% */
 const handleScroll = () => {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
   const scrollHeight = document.documentElement.scrollHeight
   const clientHeight = document.documentElement.clientHeight
   
-  // 降低显示门槛：只要能滚动（内容高度 > 窗口高度），就显示侧边条
   showVerticalProgress.value = scrollHeight > clientHeight
 
-  // 增加 5px 的容错缓冲区
-  // 有些浏览器滚动到底部时，scrollTop + clientHeight 可能会比 scrollHeight 小一点点
+  // 5px 容错：浏览器滚动到底部时 scrollTop + clientHeight 可能略小于 scrollHeight
   const distanceToBottom = scrollHeight - clientHeight - scrollTop
 
   if (distanceToBottom <= 5) {
@@ -42,8 +45,10 @@ const handleScroll = () => {
   }
 }
 
+/** 点击进度条跳转 */
 const handleTrackClick = (e) => updateScrollFromEvent(e)
 
+/** 开始拖拽进度条滑块 */
 const startDrag = (e) => {
   isDragging = true
   document.addEventListener('mousemove', onDrag)
@@ -51,12 +56,14 @@ const startDrag = (e) => {
   e.preventDefault()
 }
 const onDrag = (e) => { if (isDragging) updateScrollFromEvent(e) }
+/** 停止拖拽，清理全局事件监听 */
 const stopDrag = () => {
   isDragging = false
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
 }
 
+/** 根据鼠标位置计算百分比并跳转到对应滚动位置 */
 const updateScrollFromEvent = (e) => {
   if (!progressTrackRef.value) return
   const trackRect = progressTrackRef.value.getBoundingClientRect()
@@ -73,11 +80,11 @@ const updateScrollFromEvent = (e) => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  // 初始化一次，防止页面刚加载时不显示
-  handleScroll()
+  handleScroll() // 首屏初始化
 })
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  // 清理拖拽监听，避免内存泄漏
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
 })

@@ -103,7 +103,10 @@
 </template>
 
 <script setup>
-/* 脚本保持不变，为了节省篇幅略去，逻辑与你之前的一致 */
+/**
+ * 首页
+ * 全屏 Hero + 动态跑马灯 + 推荐文章 + 分类筛选博客列表 + 侧边栏
+ */
 import MomentTicker from './components/MomentTicker.vue'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getFrontBlogList, getFrontTypeList } from '@/api/blog'

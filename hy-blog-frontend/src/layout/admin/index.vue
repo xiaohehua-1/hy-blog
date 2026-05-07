@@ -11,10 +11,13 @@
 </template>
 
 <script setup>
-// 引入同目录下的 components 文件夹里的组件
+/**
+ * 后台管理布局
+ * 左：Sidebar（220px），右上：Header（50px），右下：AppMain 内容区
+ */
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
-import AppMain from './components/AppMain.vue' 
+import AppMain from './components/AppMain.vue'
 </script>
 
 <style scoped>

@@ -163,12 +163,15 @@
 </template>
 
 <script setup>
+/**
+ * 后台友链管理页
+ * 按审核状态筛选（已通过/待审核/未通过），支持增删改、审核通过/拒绝
+ */
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { Plus, Edit, Delete, Picture, Check, Close, CircleCheck, CircleClose, Bell } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 
-// 核心逻辑保持不变
 const loading = ref(true)
 const list = ref([])
 const total = ref(0)

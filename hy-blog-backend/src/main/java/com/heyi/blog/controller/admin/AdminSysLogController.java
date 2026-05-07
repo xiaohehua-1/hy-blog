@@ -29,8 +29,17 @@ public class AdminSysLogController {
     /**
      * 删除单条日志记录
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public R delete(@PathVariable Long id) {
         return sysLogService.removeById(id) ? R.success().message("删除成功") : R.error("删除失败");
+    }
+
+    /**
+     * 批量清理 N 天前的日志，一次 SQL 完成，无需前端逐条调接口
+     */
+    @DeleteMapping("/clean")
+    public R clean(@RequestParam(defaultValue = "30") int days) {
+        int count = ((com.heyi.blog.service.impl.SysLogServiceImpl) sysLogService).cleanOldLogs(days);
+        return R.success().message("已清理 " + count + " 条 " + days + " 天前的日志");
     }
 }

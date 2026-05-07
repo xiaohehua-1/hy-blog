@@ -28,4 +28,14 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
         wrapper.orderByDesc(SysLog::getCreateTime);
         return this.page(page, wrapper);
     }
+
+    /**
+     * 清理 days 天之前的日志，直接物理删除
+     */
+    public int cleanOldLogs(int days) {
+        LambdaQueryWrapper<SysLog> wrapper = new LambdaQueryWrapper<>();
+        // lt：createTime 早于 N 天前的记录
+        wrapper.lt(SysLog::getCreateTime, java.time.LocalDateTime.now().minusDays(days));
+        return this.baseMapper.delete(wrapper);
+    }
 }

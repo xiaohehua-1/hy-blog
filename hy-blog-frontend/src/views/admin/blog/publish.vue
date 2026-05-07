@@ -81,11 +81,15 @@
 </template>
 
 <script setup>
+/**
+ * 文章发布/编辑页
+ * 编辑模式下通过 route.params.id 获取已有文章数据回显，发布和存草稿共用同一表单
+ */
 import { reactive, ref, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import { Back } from '@element-plus/icons-vue' // 引入返回图标
+import { Back } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -157,7 +161,7 @@ onMounted(() => {
 <style scoped>
 .app-container { padding: 20px; }
 
-/* 🟢 关键样式：两个卡片之间的间距 */
+/* 两个卡片之间的间距 */
 .header-card { margin-bottom: 20px; }
 
 /* 保持和列表页一致的标题字体 */

@@ -21,6 +21,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台顶部导航栏组件
+ * 显示管理员头像/昵称、回到首页和退出登录入口
+ */
 import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '@/utils/request'
@@ -32,19 +36,21 @@ const router = useRouter()
 const adminAvatar = adminAvatarImg
 const userInfo = reactive({})
 
-// 核心修改：从后端获取最新用户信息
+/** 从后端获取当前登录用户信息 */
 const getUserInfo = async () => {
   try {
-    const res = await request.get('/admin/info') // 对应 AdminLoginController 的 info 接口
+    const res = await request.get('/admin/info')
     Object.assign(userInfo, res.data.user)
   } catch (e) {
     console.error(e)
   }
 }
 
+/** 退出登录：调后端 logout 接口，清除本地 token，跳转登录页 */
 const logout = async () => {
   try {
     await request.get('/admin/logout')
+    // 清除本地存储的 token 和用户信息，确保登录态完全失效
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     ElMessage.success('退出成功')

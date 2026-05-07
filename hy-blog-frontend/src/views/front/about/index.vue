@@ -68,8 +68,12 @@
 </template>
 
 <script setup>
+/**
+ * 关于我页面
+ * 展示站长信息、自我介绍、技能标签（从系统配置 JSON 解析）
+ */
 import { ref, onMounted } from 'vue'
-import { getAboutMe } from '@/api/config' // 现在这个方法存在了
+import { getAboutMe } from '@/api/config'
 
 const config = ref({})
 const skills = ref([])

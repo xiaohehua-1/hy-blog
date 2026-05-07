@@ -196,6 +196,10 @@
 </template>
 
 <script setup>
+/**
+ * 动态（碎碎念）页面
+ * 瀑布流卡片 + 点赞（localStorage 去重）+ 详情弹窗（含评论区）+ WebSocket 实时刷新
+ */
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { Link, Picture, Lock } from '@element-plus/icons-vue' 
 import { getFrontMomentList, likeMoment } from '@/api/moment'

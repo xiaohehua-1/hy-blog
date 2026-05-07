@@ -160,11 +160,16 @@
 </template>
 
 <script setup>
+/**
+ * 前台导航栏组件（全局）
+ * 包含：Logo、导航链接、内置音乐播放器、站内搜索弹窗、随机文章、移动端菜单
+ * 首页隐藏（滚动到第二屏时显示），非首页常驻
+ */
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { 
-  Search, Place, HomeFilled, ChatLineRound, 
-  Headset, VideoPlay, VideoPause, CaretLeft, CaretRight 
+import {
+  Search, Place, HomeFilled, ChatLineRound,
+  Headset, VideoPlay, VideoPause, CaretLeft, CaretRight
 } from '@element-plus/icons-vue'
 import { getFrontBlogList, getFrontRandomBlog } from '@/api/blog'
 import { getMusicList } from '@/api/music'
@@ -178,24 +183,23 @@ const mobileMenuOpen = ref(false)
 
 const isHome = computed(() => route.path === '/')
 
-// === 🎵 音乐播放器逻辑 ===
+// ===== 内置音乐播放器 =====
 const audioRef = ref(null)
 const isPlaying = ref(false)
 const currentIndex = ref(0)
 const progress = ref(0)
-const playlist = ref([]) 
-const isDragging = ref(false) // 新增：是否正在拖动进度条
+const playlist = ref([])
+const isDragging = ref(false) // 拖拽进度条时暂停 timeupdate 更新，防止滑块闪烁
 
 const currentSong = computed(() => {
   if (playlist.value.length === 0) return null
   return playlist.value[currentIndex.value]
 })
 
+/** 初始化播放器：拉取已启用音乐列表，兼容多种后端返回格式 */
 const initMusicPlayer = async () => {
   try {
     const res = await getMusicList()
-    // 移除 console.log
-    
     let rawList = []
     if (res.data && Array.isArray(res.data.list)) {
       rawList = res.data.list 
@@ -220,12 +224,14 @@ const initMusicPlayer = async () => {
   }
 }
 
+/** 切换播放/暂停，播放失败时恢复按钮状态 */
 const togglePlay = () => {
   if (!audioRef.value) return
   if (isPlaying.value) {
     audioRef.value.pause()
   } else {
     if (currentSong.value && currentSong.value.url) {
+      // 浏览器自动播放策略可能阻止播放，catch 恢复状态
       audioRef.value.play().catch(() => {
         isPlaying.value = false
         ElMessage.error('播放异常')
@@ -235,6 +241,7 @@ const togglePlay = () => {
   isPlaying.value = !isPlaying.value
 }
 
+/** 切到下一首，循环播放 */
 const nextSong = () => {
   if (playlist.value.length === 0) return
   currentIndex.value = (currentIndex.value + 1) % playlist.value.length
@@ -246,6 +253,7 @@ const nextSong = () => {
   })
 }
 
+/** 切到上一首 */
 const prevSong = () => {
   if (playlist.value.length === 0) return
   currentIndex.value = (currentIndex.value - 1 + playlist.value.length) % playlist.value.length
@@ -257,27 +265,25 @@ const prevSong = () => {
   })
 }
 
-// 播放中更新进度
+/** 播放进度更新，拖拽中跳过以避免闪烁 */
 const onTimeUpdate = () => {
-  // 如果用户正在拖动滑块，不要更新进度，否则会闪烁
-  if (isDragging.value) return 
-  
+  if (isDragging.value) return
   if (audioRef.value && audioRef.value.duration > 0) {
     progress.value = (audioRef.value.currentTime / audioRef.value.duration) * 100
   }
 }
 
-// 【新增】开始拖动
+/** 开始拖拽进度条，暂停自动更新 */
 const onSliderInput = () => {
   isDragging.value = true
 }
 
-// 【新增】拖动结束，跳转进度
+/** 拖拽松手，跳转到指定位置，暂停状态自动恢复播放 */
 const onSliderChange = (val) => {
   isDragging.value = false
   if (audioRef.value && audioRef.value.duration) {
     audioRef.value.currentTime = (val / 100) * audioRef.value.duration
-    // 如果是暂停状态，拖动后自动播放体验更好
+    // 暂停时拖动进度条后自动播放，体验更流畅
     if (!isPlaying.value) {
       audioRef.value.play()
       isPlaying.value = true
@@ -285,7 +291,8 @@ const onSliderChange = (val) => {
   }
 }
 
-// === 其他逻辑 ===
+// ===== 随机文章 =====
+/** 请求随机文章 ID 并跳转 */
 const handleRandomArticle = async () => {
   try {
     const res = await getFrontRandomBlog()
@@ -304,6 +311,7 @@ const hasSearched = ref(false)
 const searchInputRef = ref(null)
 let searchTimer = null
 
+/** 打开搜索弹窗并自动聚焦输入框 */
 const openSearch = () => {
   searchModalVisible.value = true
   keyword.value = ''
@@ -314,6 +322,7 @@ const openSearch = () => {
   })
 }
 
+/** 关闭搜索弹窗并清除防抖定时器 */
 const closeSearch = () => {
   searchModalVisible.value = false
   if (searchTimer) clearTimeout(searchTimer)
@@ -348,6 +357,7 @@ watch(keyword, (newVal) => {
   }, 500)
 })
 
+/** 点击搜索结果跳转文章详情 */
 const goToDetail = (id) => {
   closeSearch()
   router.push(`/article/${id}`)
@@ -358,6 +368,7 @@ const formatDate = (time) => {
   return time.split(' ')[0]
 }
 
+/** 滚动监听：超过 2/3 屏显示导航栏，超过 50px 加阴影 */
 const handleScroll = () => {
   const windowHeight = window.innerHeight
   const scrollTop = window.scrollY

@@ -116,6 +116,10 @@
 </template>
 
 <script setup>
+/**
+ * 文章详情页
+ * Markdown 渲染 + 代码高亮 + Tocbot 目录导航 + 评论区 + 相关推荐 + WebSocket 实时刷新
+ */
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getBlogDetail, getFrontBlogList } from '@/api/blog'

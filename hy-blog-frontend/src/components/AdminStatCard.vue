@@ -11,29 +11,22 @@
 </template>
 
 <script setup>
+/**
+ * 后台统计卡片组件
+ * 展示图标、标签、数值，支持点击事件，颜色通过 class 切换
+ */
 import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  icon: {
-    type: Object, // Element Plus Icon component
-    required: true
-  },
-  label: {
-    type: String,
-    required: true
-  },
-  value: {
-    type: [String, Number],
-    required: true
-  },
-  color: {
-    type: String,
-    default: 'blue' // Default color class
-  }
+  icon: { type: Object, required: true },
+  label: { type: String, required: true },
+  value: { type: [String, Number], required: true },
+  color: { type: String, default: 'blue' }
 })
 
 const emit = defineEmits(['click'])
 
+/** 点击卡片触发父组件回调 */
 const handleCardClick = () => {
   emit('click')
 }

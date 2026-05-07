@@ -127,12 +127,15 @@
 </template>
 
 <script setup>
+/**
+ * 后台用户管理页
+ * 账号/昵称搜索、增删改、头像上传、密码修改（需验证旧密码）
+ */
 import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { Plus, Edit, Delete, Search, Refresh, Key } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 
-// ... 省略基础数据定义 (list, queryParams等，保持不变) ...
 const loading = ref(true)
 const list = ref([])
 const total = ref(0)

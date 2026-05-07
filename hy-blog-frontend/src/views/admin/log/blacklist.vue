@@ -69,6 +69,10 @@
 </template>
 
 <script setup>
+/**
+ * 后台黑名单 IP 管理页
+ * IP 封禁/解封（开关切换），支持增删改查
+ */
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

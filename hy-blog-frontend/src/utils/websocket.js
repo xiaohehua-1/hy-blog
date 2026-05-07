@@ -1,10 +1,10 @@
 /**
- * WebSocket 封装工具类
+ * WebSocket 单例封装
+ * 自动判断 ws/wss 协议，支持断线重连（递增延迟）、发送重试、回调注册/注销
+ * 适用于博客站内消息推送等轻量实时场景
  */
 export default class SocketService {
-  /**
-   * 单例
-   */
+  /** 单例 */
   static instance = null;
   static get getInstance() {
     if (!this.instance) {
@@ -13,59 +13,47 @@ export default class SocketService {
     return this.instance;
   }
 
-  // 和服务端连接的socket对象
-  ws = null;
+  ws = null;                // WebSocket 实例
+  callBackMapping = {};     // 回调函数映射表
+  connected = false;        // 连接状态
+  sendRetryCount = 0;       // 发送重试计数（递增延迟）
+  reconnectCount = 0;       // 断线重连计数（递增延迟）
 
-  // 业务类型和对应的回调函数集合
-  callBackMapping = {};
-
-  // 标识是否连接成功
-  connected = false;
-
-  // 记录重试次数
-  sendRetryCount = 0;
-
-  // 重新连接尝试次数
-  reconnectCount = 0;
-
-  // 定义连接服务器的方法
+  /**
+   * 建立 WebSocket 连接，自动适配 wss:///ws://
+   * 断线时递增重连延迟（1s / 2s / 3s ...）避免频繁请求
+   */
   connect() {
     // 连接服务器
     if (!window.WebSocket) {
       return console.log('您的浏览器不支持WebSocket');
     }
     
-    // 获取当前协议 (ws 或 wss)
+    // 自动匹配 ws/wss 协议，经 Vite 代理转发到后端
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // 通过 Vite 代理连接
     const wsUrl = `${protocol}//${window.location.host}/websocket/interaction`;
 
     this.ws = new WebSocket(wsUrl);
 
-    // 连接成功的事件
     this.ws.onopen = () => {
       console.log('连接服务端成功');
       this.connected = true;
-      // 重置重连次数
-      this.reconnectCount = 0;
+      this.reconnectCount = 0; // 连接成功后重置重连计数
     };
 
-    // 1.连接服务端失败的事件
-    // 2.当连接成功之后, 服务端关闭的情况
+    // 连接失败或服务端主动关闭时自动重连，延迟递增（1s / 2s / 3s ...）
     this.ws.onclose = () => {
       console.log('连接服务端失败');
       this.connected = false;
-      // 重连
       this.reconnectCount++;
       setTimeout(() => {
         this.connect();
       }, this.reconnectCount * 1000);
     };
 
-    // 得到服务端发送过来的数据
+    // 收到消息后广播给所有注册的回调（博客场景下简单全量通知即可）
     this.ws.onmessage = (msg) => {
       console.log('从服务端接收到的数据:', msg.data);
-      // 直接触发所有的回调 (在这个简单的博客场景下，广播即刷新)
       Object.keys(this.callBackMapping).forEach((key) => {
         this.callBackMapping[key](msg.data);
       });
