@@ -30,6 +30,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        //只要浏览器的请求 URL 是以这个路径开头的，都交其处理
         registry.addResourceHandler(accessPath)
                 .addResourceLocations("file:" + uploadPath)
                 .setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());

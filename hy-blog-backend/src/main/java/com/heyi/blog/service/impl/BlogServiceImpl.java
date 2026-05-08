@@ -78,6 +78,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     /**
      * 新增文章并绑定标签，初始化统计字段为0
      */
+    // 开启事务安全保护
     @Transactional(rollbackFor = Exception.class)
     @Override
     public R saveBlog(BlogDTO blogDTO, List<Long> tagIds) {
