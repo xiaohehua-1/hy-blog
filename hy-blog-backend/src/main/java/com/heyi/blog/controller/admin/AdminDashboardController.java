@@ -116,7 +116,6 @@ public class AdminDashboardController {
             }
 
             // 执行数据库查询
-            // 这种循环查库在数据量巨大时性能不佳，但对于毕设或中小型博客，逻辑最清晰且绝对够用
             commentTrend.add(commentService.count(new QueryWrapper<Comment>().between("create_time", queryStart, queryEnd)));
             messageTrend.add(messageService.count(new QueryWrapper<Message>().between("create_time", queryStart, queryEnd)));
             viewTrend.add(sysLogService.count(new QueryWrapper<SysLog>().between("create_time", queryStart, queryEnd)));

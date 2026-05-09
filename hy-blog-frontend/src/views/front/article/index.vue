@@ -192,7 +192,7 @@ const fetchRecommend = async () => {
   } catch (e) {}
 }
 
-// === 修复1：列表刷新逻辑 ===
+// === 列表刷新逻辑 ===
 const refreshList = () => {
   // 设置 300 毫秒延迟，确保后端数据库已经完全把数据存进去了
   setTimeout(() => {
